@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AIM-X // 9D AMBER MESH // SILENCE HYPER-COMPRESSOR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Share Tech Mono', 'Inter', monospace;
+      background-color: #050402;
+      color: #fbbf24;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    canvas.webgl-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .glass-panel {
+      background: rgba(14, 10, 4, 0.84);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      box-shadow: 0 0 24px rgba(245, 158, 11, 0.14);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .glass-panel.blue-active {
+      border-color: rgba(56, 189, 248, 0.55);
+      box-shadow: 0 0 28px rgba(14, 165, 233, 0.22);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(245, 158, 11, 0.22);
+      height: 5px;
+      border-radius: 9999px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 9999px;
+      background: #f59e0b;
+      cursor: pointer;
+      box-shadow: 0 0 10px #fbbf24;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border: none;
+      border-radius: 9999px;
+      background: #f59e0b;
+      cursor: pointer;
+      box-shadow: 0 0 10px #fbbf24;
+    }
+
+    .btn-electric-blue {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.45), rgba(37, 99, 235, 0.55));
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 10px rgba(125, 211, 252, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .btn-electric-blue:hover {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.65), rgba(59, 130, 246, 0.75));
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.6), inset 0 0 14px rgba(186, 230, 253, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-electric-blue.engaged {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.85), rgba(37, 99, 235, 0.9));
+      color: #ffffff;
+      box-shadow: 0 0 28px rgba(56, 189, 248, 0.85), inset 0 0 16px rgba(255, 255, 255, 0.35);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden relative bg-[#050402] text-amber-400">
+
+  <!-- 3D WebGL Viewport -->
+  <div id="canvas-container" class="w-full h-full relative z-0"></div>
+
+  <!-- Non-blocking Status Banner -->
+  <div id="status-banner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg glass-panel text-xs text-sky-200 border-sky-400/60 max-w-[90vw] text-center">
+    <span id="status-banner-text">Sovereign Bus Ready</span>
+  </div>
+
+  <!-- Top-Left Telemetry & Hyper-Compressor HUD (Collapsible) -->
+  <aside id="telemetry-panel" class="fixed top-3 left-3 sm:top-4 sm:left-4 z-20 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] glass-panel rounded-xl overflow-hidden">
+    <div class="flex items-center justify-between px-3 py-2.5 bg-amber-950/50 border-b border-amber-500/30">
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="telemetry-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+        <span class="text-xs font-bold tracking-wider text-amber-300 truncate">9D MESH // HYPER-GAP BUS</span>
+      </div>
+      <button id="toggle-telemetry" type="button" aria-label="Toggle Telemetry HUD" class="text-xs px-2.5 py-1 border border-amber-500/40 rounded-md hover:bg-amber-500/20 text-amber-300 shrink-0 ml-2">
+        [−]
+      </button>
+    </div>
+
+    <div id="telemetry-body" class="p-3 space-y-2 text-xs max-h-[46vh] sm:max-h-[70vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">AUDIO SOURCE:</span>
+        <span id="hud-source" class="text-amber-200 font-semibold text-right">NONE / STANDBY</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">SENSITIVITY PRESET:</span>
+        <span id="hud-preset" class="text-amber-200 font-semibold text-right">BASS CLUB</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">SEGMENT STATE:</span>
+        <span id="hud-seg-state" class="text-amber-200 font-bold text-right">SILENCE GAP</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">SILENCE CONDENSED:</span>
+        <span id="hud-gap-cond" class="text-amber-200 font-bold text-right">0.0%</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">WAVE ROUND (ψ):</span>
+        <span id="hud-wave-round" class="text-amber-200 text-right">0.000</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">BLUE PHASE STATE:</span>
+        <span id="hud-blue-state" class="text-sky-400 font-semibold text-right">STANDBY (AMBER)</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">BASS / MID / TREB:</span>
+        <span id="hud-bands" class="text-amber-200 text-right">0% · 0% · 0%</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">BEAT TRIGGERS:</span>
+        <span id="hud-beats" class="text-amber-200 font-bold text-right">0</span>
+      </div>
+      <div class="flex items-center justify-between border-b border-amber-500/15 pb-1.5 gap-2">
+        <span class="text-amber-500/80">ACTIVE NODES:</span>
+        <span id="hud-nodes" class="text-amber-200 font-bold text-right">0</span>
+      </div>
+
+      <!-- Visual Beat-Energy Meter with Threshold Marker -->
+      <div class="pt-1 space-y-1">
+        <div class="flex items-center justify-between text-[10px]">
+          <span class="text-amber-400/90 tracking-wider flex items-center gap-1.5">
+            <span id="beat-flash-led" class="inline-block w-2 h-2 rounded-full bg-amber-500/30 transition-all duration-75"></span>
+            BEAT ENERGY METER
+          </span>
+          <span id="hud-beat-thresh" class="text-amber-300/80">THR: 15.0%</span>
+        </div>
+        <div class="relative w-full h-3 rounded-md bg-amber-950/80 border border-amber-500/30 overflow-hidden">
+          <div id="beat-energy-bar" class="h-full w-0 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-100 transition-[width] duration-75"></div>
+          <div id="beat-threshold-marker" title="Beat Threshold" class="absolute top-0 bottom-0 w-0.5 bg-sky-300 shadow-[0_0_6px_#38bdf8]" style="left: 15%;"></div>
+        </div>
+      </div>
+
+      <!-- Mini FFT & Wave-Rounded Envelope Scope -->
+      <div class="pt-1 space-y-1">
+        <div class="flex items-center justify-between text-[10px]">
+          <span class="text-amber-400/90 tracking-wider">FFT + WAVE GAP SCOPE</span>
+          <span id="hud-sonic-segs" class="text-amber-300/70">SEGS: 0</span>
+        </div>
+        <div class="w-full h-14 rounded-md bg-black/50 border border-amber-500/25 overflow-hidden">
+          <canvas id="fft-spectrum-canvas" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-amber-300/65 pt-1 leading-snug border-t border-amber-500/15">
+        Condenses inter-segment silence rather than squashing peak levels; wave rounding smooths sonic joins in real time.
+      </p>
+    </div>
+  </aside>
+
+  <!-- Bottom-Right Signal, 4x Hyper-Compressor Matrix & Shader HUD (Collapsible) -->
+  <aside id="controls-panel" class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] glass-panel rounded-xl overflow-hidden">
+    <div class="flex items-center justify-between px-3 py-2.5 bg-amber-950/50 border-b border-amber-500/30">
+      <span class="text-xs font-bold tracking-wider text-amber-300 truncate">4X HYPER-COMPRESSOR &amp; SHADER MATRIX</span>
+      <button id="toggle-controls" type="button" aria-label="Toggle Control Matrix" class="text-xs px-2.5 py-1 border border-amber-500/40 rounded-md hover:bg-amber-500/20 text-amber-300 shrink-0 ml-2">
+        [−]
+      </button>
+    </div>
+
+    <div id="controls-body" class="p-3 space-y-3 text-xs max-h-[52vh] sm:max-h-[76vh] overflow-y-auto">
+      <!-- Material Mode Toggles -->
+      <div>
+        <label class="block text-[11px] text-amber-400/80 mb-1.5 tracking-wide">MATERIAL TOPOLOGY MODE</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button data-mode="0" type="button" class="mode-btn py-2 px-1.5 rounded-lg border border-amber-400 bg-amber-500/30 text-amber-100 font-bold text-[11px] transition">
+            AMBER RESIN
+          </button>
+          <button data-mode="1" type="button" class="mode-btn py-2 px-1.5 rounded-lg border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-[11px] transition">
+            WIREFRAME
+          </button>
+          <button data-mode="2" type="button" class="mode-btn py-2 px-1.5 rounded-lg border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-[11px] transition">
+            9D PLASMA
+          </button>
+        </div>
+      </div>
+
+      <!-- Audio Sensitivity Presets -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block text-[11px] text-amber-400/80 tracking-wide">AUDIO SENSITIVITY PRESET</label>
+          <span id="preset-band-hint" class="text-[10px] text-amber-300/70">SUB 20–150Hz</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button data-preset="bass" type="button" class="preset-btn py-2 px-1.5 rounded-lg border border-amber-400 bg-amber-500/30 text-amber-100 font-bold text-[10px] transition">
+            BASS CLUB
+          </button>
+          <button data-preset="vocal" type="button" class="preset-btn py-2 px-1.5 rounded-lg border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-[10px] transition">
+            VOCAL / VOICE
+          </button>
+          <button data-preset="quiet" type="button" class="preset-btn py-2 px-1.5 rounded-lg border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-[10px] transition">
+            QUIET ROOM
+          </button>
+        </div>
+      </div>
+
+      <!-- 4X MULTIPLIED SLIDER SYSTEM (4 BANKS x 3 SLIDERS = 12 SLIDERS) -->
+      <div class="space-y-2.5 pt-1.5 border-t border-amber-500/20">
+        <div class="flex items-center justify-between">
+          <label class="block text-[11px] text-amber-300 font-bold tracking-wide">4X SILENCE-GAP HYPER-COMPRESSOR (12 SLIDERS)</label>
+          <button id="btn-hyper-bypass" type="button" class="text-[10px] px-2 py-0.5 rounded border border-amber-400/60 bg-amber-500/25 text-amber-100 font-bold">
+            HYPER: ON
+          </button>
+        </div>
+
+        <!-- Bank 1: Sub-Silence & Burst Condenser -->
+        <div class="p-2 rounded-lg bg-amber-950/35 border border-amber-500/20 space-y-1.5">
+          <div class="text-[10px] font-bold text-amber-300/90 tracking-wider">BANK 1 // SUB-SILENCE &amp; GAP PULL</div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>1A. SILENCE FLOOR</span>
+              <span id="val-s1-floor" class="text-amber-200">0.045</span>
+            </div>
+            <input id="s1-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.045" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>1B. GAP CONDENSE</span>
+              <span id="val-s1-condense" class="text-amber-200">0.75</span>
+            </div>
+            <input id="s1-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.75" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>1C. WAVE ROUND (SIN)</span>
+              <span id="val-s1-round" class="text-amber-200">0.65</span>
+            </div>
+            <input id="s1-round" type="range" min="0.0" max="1.0" step="0.02" value="0.65" class="w-full" />
+          </div>
+        </div>
+
+        <!-- Bank 2: Mid-Segment Syllable & Pause Condenser -->
+        <div class="p-2 rounded-lg bg-amber-950/35 border border-amber-500/20 space-y-1.5">
+          <div class="text-[10px] font-bold text-amber-300/90 tracking-wider">BANK 2 // MID-SEGMENT PAUSE ISOLATOR</div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>2A. SILENCE FLOOR</span>
+              <span id="val-s2-floor" class="text-amber-200">0.035</span>
+            </div>
+            <input id="s2-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.035" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>2B. GAP CONDENSE</span>
+              <span id="val-s2-condense" class="text-amber-200">0.70</span>
+            </div>
+            <input id="s2-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.70" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>2C. WAVE ROUND (COS)</span>
+              <span id="val-s2-round" class="text-amber-200">0.60</span>
+            </div>
+            <input id="s2-round" type="range" min="0.0" max="1.0" step="0.02" value="0.60" class="w-full" />
+          </div>
+        </div>
+
+        <!-- Bank 3: High/Air Transient Tail Condenser -->
+        <div class="p-2 rounded-lg bg-amber-950/35 border border-amber-500/20 space-y-1.5">
+          <div class="text-[10px] font-bold text-amber-300/90 tracking-wider">BANK 3 // AIR TAIL &amp; DECAY CONDENSER</div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>3A. SILENCE FLOOR</span>
+              <span id="val-s3-floor" class="text-amber-200">0.025</span>
+            </div>
+            <input id="s3-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.025" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>3B. GAP CONDENSE</span>
+              <span id="val-s3-condense" class="text-amber-200">0.65</span>
+            </div>
+            <input id="s3-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.65" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>3C. WAVE ROUND (HARMONIC)</span>
+              <span id="val-s3-round" class="text-amber-200">0.70</span>
+            </div>
+            <input id="s3-round" type="range" min="0.0" max="1.0" step="0.02" value="0.70" class="w-full" />
+          </div>
+        </div>
+
+        <!-- Bank 4: Real-Time Dynamic Flow & Master Wave Smoother -->
+        <div class="p-2 rounded-lg bg-amber-950/35 border border-amber-500/20 space-y-1.5">
+          <div class="text-[10px] font-bold text-amber-300/90 tracking-wider">BANK 4 // REAL-TIME DYNAMIC WAVE BUS</div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>4A. DYNAMIC DENSITY</span>
+              <span id="val-s4-floor" class="text-amber-200">0.60</span>
+            </div>
+            <input id="s4-floor" type="range" min="0.0" max="1.0" step="0.02" value="0.60" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>4B. WAVE FREQ (Hz)</span>
+              <span id="val-s4-condense" class="text-amber-200">6.50</span>
+            </div>
+            <input id="s4-condense" type="range" min="1.0" max="24.0" step="0.25" value="6.50" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px]">
+              <span>4C. SPLICE WAVE ROUND</span>
+              <span id="val-s4-round" class="text-amber-200">0.80</span>
+            </div>
+            <input id="s4-round" type="range" min="0.0" max="1.0" step="0.02" value="0.80" class="w-full" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Manifold & Beat Sliders -->
+      <div class="space-y-2 pt-1.5 border-t border-amber-500/20">
+        <div>
+          <div class="flex justify-between text-[11px] mb-1">
+            <span>9D TORSION / DEPTH</span>
+            <span id="val-depth" class="text-amber-200">1.40</span>
+          </div>
+          <input id="slider-depth" type="range" min="0.1" max="3.5" step="0.05" value="1.40" class="w-full" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-[11px] mb-1">
+            <span>SURFACE TENSION (ω)</span>
+            <span id="val-tension" class="text-amber-200">2.50</span>
+          </div>
+          <input id="slider-tension" type="range" min="0.5" max="8.0" step="0.1" value="2.50" class="w-full" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-[11px] mb-1">
+            <span>PHASE ROTATION SPEED</span>
+            <span id="val-speed" class="text-amber-200">1.00</span>
+          </div>
+          <input id="slider-speed" type="range" min="0.0" max="4.0" step="0.1" value="1.00" class="w-full" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-[11px] mb-1">
+            <span>BEAT SENSITIVITY</span>
+            <span id="val-beat-sens" class="text-amber-200">1.40x</span>
+          </div>
+          <input id="slider-beat-sens" type="range" min="1.05" max="2.50" step="0.05" value="1.40" class="w-full" />
+        </div>
+      </div>
+
+      <!-- Audio Synthesis, Live Mic & Local File Upload -->
+      <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+        <button id="btn-synth" type="button" class="p-2 rounded-lg border border-amber-400/60 bg-amber-500/20 hover:bg-amber-500/35 text-amber-200 font-bold text-[10px] transition">
+          ▶ 432Hz DRONE
+        </button>
+        <button id="btn-mic" type="button" class="p-2 rounded-lg border border-amber-400/60 bg-amber-500/15 hover:bg-amber-500/30 text-amber-200 font-bold text-[10px] transition">
+          🎙 LIVE MIC
+        </button>
+        <label class="p-2 rounded-lg border border-amber-400/60 bg-amber-500/10 hover:bg-amber-500/25 text-amber-200 text-center cursor-pointer font-bold text-[10px] transition flex items-center justify-center">
+          MP3 FILE
+          <input id="input-audio" type="file" accept="audio/*" class="hidden" />
+        </label>
+      </div>
+
+      <!-- Auto Beat-Triggered Shockwave Toggle -->
+      <button id="btn-auto-beat" type="button" class="w-full p-2 rounded-lg border border-amber-400 bg-amber-500/25 hover:bg-amber-500/35 text-amber-100 font-bold text-[11px] tracking-wider transition cursor-pointer">
+        ◎ AUTO BEAT SHOCKWAVES: ON
+      </button>
+
+      <!-- Electric Blue Action Button -->
+      <button id="btn-blue-phase" type="button" class="btn-electric-blue w-full p-2.5 rounded-lg font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer">
+        <span>◈</span>
+        <span id="btn-blue-label">BLUE PHASE // SOVEREIGN PULSE</span>
+      </button>
+
+      <!-- Manual Zero-Crossing Phase Snap (+1D) -->
+      <button id="btn-pulse" type="button" class="w-full p-2 rounded-lg border border-amber-300/80 bg-amber-500/30 hover:bg-amber-400/40 text-amber-100 font-bold text-[11px] tracking-wider transition cursor-pointer">
+        ⚡ ZERO-CROSSING PHASE SNAP (+1D)
+      </button>
+    </div>
+  </aside>
+
+  <!-- Custom GLSL Vertex Shader -->
+  <script id="vertexShader" type="x-shader/x-vertex">
+    uniform float uTime;
+    uniform float uDepth;
+    uniform float uTension;
+    uniform float uBass;
+    uniform float uMid;
+    uniform float uTreble;
+    uniform float uGapCondense;
+    uniform float uWaveRound;
+    uniform float uPulseTime;
+    uniform float uBluePulseTime;
+    uniform float uBlueMix;
+
+    varying vec3 vNormal;
+    varying vec3 vWorldPos;
+    varying float vDisplacement;
+    varying float vBassZone;
+    varying float vMidZone;
+    varying float vTrebleZone;
+    varying vec2 vUv;
+
+    float harmonic9D(vec3 p, float t) {
+      float w1 = sin(p.x * uTension + t) * cos(p.y * uTension - t * 0.8);
+      float w2 = sin(p.z * uTension * 1.5 + t * 1.2) * cos(length(p.xy) * 2.0 - t);
+      float w3 = sin((p.x + p.y + p.z) * 3.0 - t * 1.7);
+      return (w1 * 0.5 + w2 * 0.35 + w3 * 0.15);
+    }
+
+    // Wave-rounding envelope function that softens hard ridges into smooth sinusoidal curves
+    float roundWave(float x, float amount) {
+      float rounded = sin(x * 1.5707963);
+      return mix(x, rounded, clamp(amount, 0.0, 1.0));
+    }
+
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+
+      float bassZone = 1.0 - smoothstep(0.0, 0.95, abs(pos.y));
+      float midBandWave = 0.5 + 0.5 * sin(pos.x * 3.2 - pos.y * 4.2 + uTime * 1.8);
+      float midZone = midBandWave * (1.0 - 0.35 * bassZone);
+      float polarMask = smoothstep(0.35, 1.35, abs(pos.y));
+      float microRipple = sin(pos.x * 14.0 + uTime * 7.0) * cos(pos.z * 14.0 - uTime * 6.5);
+      float trebleZone = clamp(polarMask * 0.75 + 0.25, 0.0, 1.0);
+
+      vBassZone = bassZone * uBass;
+      vMidZone = midZone * uMid;
+      vTrebleZone = trebleZone * uTreble;
+
+      float rawWave = harmonic9D(pos, uTime);
+      float baseWave = roundWave(rawWave, uWaveRound * 0.75);
+
+      // Gap condensation pulls radial folds tighter when silence gaps are condensed
+      float gapPull = 1.0 - uGapCondense * 0.28;
+      float bassDisp = bassZone * uBass * (0.75 + 0.35 * sin(uTime * 3.0));
+      float midDisp = midZone * uMid * (0.65 * sin(pos.z * 4.0 + uTime * 2.5));
+      float trebleDisp = trebleZone * uTreble * (0.36 * roundWave(microRipple, uWaveRound));
+
+      float pulseAge = uTime - uPulseTime;
+      float shockwave = 0.0;
+      if (pulseAge >= 0.0 && pulseAge < 2.5) {
+        float radius = pulseAge * 4.5;
+        float dist = abs(length(pos) - radius);
+        shockwave = exp(-dist * 2.5) * sin(dist * 12.0) * (1.0 - pulseAge / 2.5) * 1.45;
+      }
+
+      float blueAge = uTime - uBluePulseTime;
+      float blueWave = 0.0;
+      if (blueAge >= 0.0 && blueAge < 2.8) {
+        float bRadius = blueAge * 5.2;
+        float bDist = abs(length(pos) - bRadius);
+        blueWave = exp(-bDist * 2.2) * cos(bDist * 14.0 - blueAge * 10.0) * (1.0 - blueAge / 2.8) * 1.25;
+      }
+
+      float blueHarmonicBoost = uBlueMix * 0.16 * sin(pos.y * 5.0 + uTime * 3.5);
+      float totalDisp = (baseWave * 0.35 * uDepth * gapPull) + bassDisp + midDisp + trebleDisp + shockwave + blueWave + blueHarmonicBoost;
+      vDisplacement = totalDisp;
+
+      vec3 displacedPos = pos + normal * totalDisp;
+      vec4 worldPosition = modelMatrix * vec4(displacedPos, 1.0);
+      vWorldPos = worldPosition.xyz;
+      vNormal = normalize(normalMatrix * normal);
+
+      gl_Position = projectionMatrix * viewMatrix * worldPosition;
+    }
+  </script>
+
+  <!-- Custom GLSL Fragment Shader -->
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    uniform float uTime;
+    uniform int uMode;
+    uniform float uMid;
+    uniform float uTreble;
+    uniform float uWaveRound;
+    uniform float uBlueMix;
+
+    varying vec3 vNormal;
+    varying vec3 vWorldPos;
+    varying float vDisplacement;
+    varying float vBassZone;
+    varying float vMidZone;
+    varying float vTrebleZone;
+    varying vec2 vUv;
+
+    void main() {
+      vec3 viewDir = normalize(cameraPosition - vWorldPos);
+      float fresnel = pow(1.0 - abs(dot(viewDir, normalize(vNormal))), 2.6);
+
+      vec3 coreHoney     = vec3(0.98, 0.55, 0.05);
+      vec3 deepResin     = vec3(0.32, 0.09, 0.01);
+      vec3 sovereignGold = vec3(1.00, 0.88, 0.45);
+
+      vec3 electricBlue  = vec3(0.06, 0.62, 0.98);
+      vec3 deepCobalt    = vec3(0.02, 0.10, 0.32);
+      vec3 iceCyanRim    = vec3(0.55, 0.92, 1.00);
+      vec3 plasmaCyan    = vec3(0.15, 0.90, 0.95);
+
+      vec3 activeCore  = mix(coreHoney, electricBlue, uBlueMix);
+      vec3 activeDeep  = mix(deepResin, deepCobalt, uBlueMix);
+      vec3 activeRim   = mix(sovereignGold, iceCyanRim, uBlueMix);
+
+      if (uMode == 1) {
+        vec3 col = mix(activeCore, activeRim, fresnel + vTrebleZone * 0.4);
+        gl_FragColor = vec4(col, 0.88);
+        return;
+      }
+
+      if (uMode == 2) {
+        float shift = clamp(vMidZone * 1.5 + vDisplacement * 0.5 + uBlueMix * 0.35, 0.0, 1.0);
+        vec3 baseCol = mix(activeCore, plasmaCyan, shift);
+        vec3 glow = mix(activeDeep, baseCol, fresnel + 0.25);
+        gl_FragColor = vec4(glow + activeRim * pow(fresnel, 3.0), 0.92);
+        return;
+      }
+
+      float internalGlow = smoothstep(-0.6, 0.9, vDisplacement + vBassZone * 0.35);
+      vec3 resinColor = mix(activeDeep, activeCore, internalGlow);
+      resinColor += mix(sovereignGold, plasmaCyan, uBlueMix) * vMidZone * 0.35;
+      resinColor += activeRim * fresnel * (0.85 + vTrebleZone * 1.2 + uBlueMix * 0.35);
+
+      // Wave-rounded caustic lattice
+      float rawLat = sin(vWorldPos.x * 6.0 + uTime) * cos(vWorldPos.y * 6.0 - uTime);
+      float roundedLat = mix(abs(rawLat), 0.5 + 0.5 * sin(rawLat * 3.14159), uWaveRound);
+      resinColor += activeCore * pow(roundedLat, 6.0) * (0.35 + vTrebleZone * 0.45);
+
+      float alpha = clamp(0.78 + fresnel * 0.22, 0.0, 1.0);
+      gl_FragColor = vec4(resinColor, alpha);
+    }
+  </script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      let bannerTimeout = null;
+      function showBanner(msg) {
+        const banner = document.getElementById('status-banner');
+        const textEl = document.getElementById('status-banner-text');
+        if (!banner || !textEl) return;
+        textEl.textContent = msg;
+        banner.classList.remove('hidden');
+        clearTimeout(bannerTimeout);
+        bannerTimeout = setTimeout(() => {
+          banner.classList.add('hidden');
+        }, 3000);
+      }
+
+      // --- 1. Scene, Camera, Renderer & OrbitControls ---
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x070502, 0.045);
+
+      const camera = new THREE.PerspectiveCamera(
+        55,
+        Math.max(1, window.innerWidth) / Math.max(1, window.innerHeight),
+        0.1,
+        100
+      );
+      camera.position.set(0, 1.2, 6.2);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.domElement.classList.add('webgl-canvas');
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      container.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 2.5;
+      controls.maxDistance = 16.0;
+
+      // --- 2. Shader Uniforms, 9D Mesh & Frequency-Zoned Cloud ---
+      const uniforms = {
+        uTime:          { value: 0 },
+        uDepth:         { value: 1.4 },
+        uTension:       { value: 2.5 },
+        uBass:          { value: 0 },
+        uMid:           { value: 0 },
+        uTreble:        { value: 0 },
+        uGapCondense:   { value: 0.7 },
+        uWaveRound:     { value: 0.68 },
+        uPulseTime:     { value: -10.0 },
+        uBluePulseTime: { value: -10.0 },
+        uBlueMix:       { value: 0.0 },
+        uMode:          { value: 0 }
+      };
+
+      const coreGeo = new THREE.TorusKnotGeometry(1.45, 0.48, 220, 48, 3, 5);
+      const coreMat = new THREE.ShaderMaterial({
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        uniforms: uniforms,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
+      const amberMesh = new THREE.Mesh(coreGeo, coreMat);
+      scene.add(amberMesh);
+
+      const cageGeo = new THREE.IcosahedronGeometry(2.85, 2);
+      const cageMat = new THREE.MeshBasicMaterial({
+        color: 0xf59e0b,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.14
+      });
+      const phaseCage = new THREE.Mesh(cageGeo, cageMat);
+      scene.add(phaseCage);
+
+      const gridHelper = new THREE.GridHelper(24, 36, 0xd97706, 0x291804);
+      gridHelper.position.y = -2.8;
+      scene.add(gridHelper);
+
+      const particleCount = 450;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(particleCount * 3);
+      const pBasePos = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const x = (Math.random() - 0.5) * 18;
+        const y = (Math.random() - 0.5) * 12;
+        const z = (Math.random() - 0.5) * 18;
+        pPos[i3] = pBasePos[i3] = x;
+        pPos[i3 + 1] = pBasePos[i3 + 1] = y;
+        pPos[i3 + 2] = pBasePos[i3 + 2] = z;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const pMat = new THREE.PointsMaterial({
+        color: 0xfbbf24,
+        size: 0.048,
+        transparent: true,
+        opacity: 0.65
+      });
+      const dustSystem = new THREE.Points(pGeo, pMat);
+      scene.add(dustSystem);
+
+      // --- 3. Interactive Raycasting & Sovereign Energy Nodes ---
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const spawnedNodes = [];
+      let isBluePhaseActive = false;
+      let blueTargetMix = 0.0;
+
+      function spawnSovereignNodeAt(worldPoint, isElectricBlue) {
+        const nodeGeo = new THREE.OctahedronGeometry(0.115, 0);
+        const nodeMat = new THREE.MeshBasicMaterial({
+          color: isElectricBlue ? 0x38bdf8 : 0xfef08a
+        });
+        const node = new THREE.Mesh(nodeGeo, nodeMat);
+        node.position.copy(worldPoint);
+        node.userData = {
+          vel: worldPoint.clone().normalize().multiplyScalar(0.016 + Math.random() * 0.022),
+          isBlue: isElectricBlue
+        };
+        scene.add(node);
+        spawnedNodes.push(node);
+
+        if (spawnedNodes.length > 90) {
+          const oldest = spawnedNodes.shift();
+          scene.remove(oldest);
+          oldest.geometry.dispose();
+          oldest.material.dispose();
+        }
+
+        document.getElementById('hud-nodes').textContent = spawnedNodes.length;
+      }
+
+      let beatFlashTimeout = null;
+      const beatFlashLed = document.getElementById('beat-flash-led');
+
+      function flashBeatLed(isBlue) {
+        if (!beatFlashLed) return;
+        beatFlashLed.className = isBlue
+          ? 'inline-block w-2 h-2 rounded-full bg-sky-300 shadow-[0_0_8px_#38bdf8] scale-125 transition-all duration-75'
+          : 'inline-block w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_8px_#fbbf24] scale-125 transition-all duration-75';
+        clearTimeout(beatFlashTimeout);
+        beatFlashTimeout = setTimeout(() => {
+          beatFlashLed.className = 'inline-block w-2 h-2 rounded-full bg-amber-500/30 transition-all duration-75';
+        }, 120);
+      }
+
+      function triggerShockwave(spawnNodeFromSurface = false) {
+        uniforms.uPulseTime.value = uniforms.uTime.value;
+        if (isBluePhaseActive) {
+          uniforms.uBluePulseTime.value = uniforms.uTime.value;
+        }
+        flashBeatLed(isBluePhaseActive);
+        if (spawnNodeFromSurface) {
+          const angle = Math.random() * Math.PI * 2;
+          const elev = (Math.random() - 0.5) * Math.PI * 0.7;
+          const r = 1.65;
+          const pt = new THREE.Vector3(
+            r * Math.cos(elev) * Math.cos(angle),
+            r * Math.sin(elev),
+            r * Math.cos(elev) * Math.sin(angle)
+          );
+          spawnSovereignNodeAt(pt, isBluePhaseActive);
+        }
+      }
+
+      let downPos = { x: 0, y: 0 };
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        downPos = { x: e.clientX, y: e.clientY };
+      });
+
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        const dx = e.clientX - downPos.x;
+        const dy = e.clientY - downPos.y;
+        if (Math.hypot(dx, dy) > 8) return;
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObject(amberMesh, false);
+        if (hits.length > 0) {
+          spawnSovereignNodeAt(hits[0].point, isBluePhaseActive);
+          triggerShockwave(false);
+        }
+      });
+
+      // --- 4. 4x Slider System (12 Sliders) & Silence-Gap Hyper-Compressor DSP ---
+      // 4 Banks x 3 Sliders = 12 sliders
+      const hyperParams = {
+        enabled: true,
+        s1Floor: 0.045,       // Bank 1A: Sub silence floor
+        s1Condense: 0.75,    // Bank 1B: Sub gap condensation
+        s1Round: 0.65,       // Bank 1C: Sine wave rounding
+        s2Floor: 0.035,       // Bank 2A: Mid silence floor
+        s2Condense: 0.70,    // Bank 2B: Mid gap condensation
+        s2Round: 0.60,       // Bank 2C: Cosine wave rounding
+        s3Floor: 0.025,       // Bank 3A: Air silence floor
+        s3Condense: 0.65,    // Bank 3B: Air gap condensation
+        s3Round: 0.70,       // Bank 3C: Harmonic wave rounding
+        s4Density: 0.60,     // Bank 4A: Real-time dynamic compression density
+        s4WaveHz: 6.50,      // Bank 4B: Rounding wave frequency (Hz)
+        s4SpliceRound: 0.80  // Bank 4C: Segment join wave rounding
+      };
+
+      function bindSlider(inputId, valId, key, fmt = (v) => v.toFixed(2)) {
+        const el = document.getElementById(inputId);
+        const label = document.getElementById(valId);
+        if (!el || !label) return;
+        el.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          hyperParams[key] = val;
+          label.textContent = fmt(val);
+        });
+      }
+
+      bindSlider('s1-floor', 'val-s1-floor', 's1Floor', (v) => v.toFixed(3));
+      bindSlider('s1-condense', 'val-s1-condense', 's1Condense');
+      bindSlider('s1-round', 'val-s1-round', 's1Round');
+
+      bindSlider('s2-floor', 'val-s2-floor', 's2Floor', (v) => v.toFixed(3));
+      bindSlider('s2-condense', 'val-s2-condense', 's2Condense');
+      bindSlider('s2-round', 'val-s2-round', 's2Round');
+
+      bindSlider('s3-floor', 'val-s3-floor', 's3Floor', (v) => v.toFixed(3));
+      bindSlider('s3-condense', 'val-s3-condense', 's3Condense');
+      bindSlider('s3-round', 'val-s3-round', 's3Round');
+
+      bindSlider('s4-floor', 'val-s4-floor', 's4Density');
+      bindSlider('s4-condense', 'val-s4-condense', 's4WaveHz');
+      bindSlider('s4-round', 'val-s4-round', 's4SpliceRound');
+
+      const btnHyperBypass = document.getElementById('btn-hyper-bypass');
+      btnHyperBypass.addEventListener('click', () => {
+        hyperParams.enabled = !hyperParams.enabled;
+        btnHyperBypass.textContent = hyperParams.enabled ? 'HYPER: ON' : 'HYPER: BYPASS';
+        btnHyperBypass.classList.toggle('bg-amber-500/25', hyperParams.enabled);
+        btnHyperBypass.classList.toggle('border-amber-400', hyperParams.enabled);
+        btnHyperBypass.classList.toggle('border-amber-500/30', !hyperParams.enabled);
+        showBanner(hyperParams.enabled
+          ? 'Silence-Gap Hyper-Compressor engaged.'
+          : 'Hyper-Compressor bypassed (raw pass-through).');
+      });
+
+      // Real-time Silence-Segment Condenser + Wave-Rounding ScriptProcessor DSP
+      // Condenses silence gaps between sonic segments without squashing peak levels.
+      let audioCtx = null;
+      let analyser = null;
+      let dataArray = null;
+      let hyperProcessor = null;
+      let hyperGainNode = null;
+      let isSynthPlaying = false;
+      let isMicActive = false;
+      let synthNodes = [];
+      let synthGain = null;
+      let micStream = null;
+      let micSource = null;
+      let uploadedAudioEl = null;
+      let uploadedSource = null;
+
+      // Telemetry shared from audio DSP thread to render loop
+      const dspTelemetry = {
+        isSilentGap: true,
+        gapCondensePct: 0,
+        waveRoundVal: 0,
+        sonicSegmentCount: 0,
+        envTrace: new Float32Array(64)
+      };
+      let envTraceIdx = 0;
+
+      function createHyperCompressorNode(ctx) {
+        const bufferSize = 1024;
+        const proc = ctx.createScriptProcessor(bufferSize, 1, 1);
+
+        // Ring buffer to hold active sonic segments & smoothly condense silence segments
+        const ringCap = ctx.sampleRate * 2;
+        const ringBuf = new Float32Array(ringCap);
+        const lookaheadCushion = 512; // Keeps a safety cushion so segment joins never click
+        let writeIdx = 0;
+        let readIdx = 0;
+        let bufferedSamples = 0;
+
+        let rmsEnv = 0;
+        let wasActive = false;
+        let silenceRunSamples = 0;
+        let wavePhase = 0;
+        let spliceSmoothEnv = 1.0;
+        let prevOutSample = 0;
+
+        proc.onaudioprocess = (event) => {
+          const input = event.inputBuffer.getChannelData(0);
+          const output = event.outputBuffer.getChannelData(0);
+          const sr = ctx.sampleRate;
+
+          if (!hyperParams.enabled) {
+            output.set(input);
+            dspTelemetry.isSilentGap = false;
+            dspTelemetry.gapCondensePct = 0;
+            return;
+          }
+
+          const avgFloor = (hyperParams.s1Floor + hyperParams.s2Floor + hyperParams.s3Floor) / 3;
+          const avgCondense = (hyperParams.s1Condense + hyperParams.s2Condense + hyperParams.s3Condense) / 3;
+          const avgRound = (hyperParams.s1Round + hyperParams.s2Round + hyperParams.s3Round + hyperParams.s4SpliceRound) / 4;
+          const phaseInc = (Math.PI * 2 * hyperParams.s4WaveHz) / sr;
+
+          let lastSampleActive = false;
+          let activeSamplesInBlock = 0;
+
+          for (let i = 0; i < input.length; i++) {
+            const s = input[i];
+            const absS = Math.abs(s);
+
+            // Fast attack / smooth release envelope with subtle hysteresis around silence floor
+            const envAlpha = absS > rmsEnv ? 0.015 : 0.0018;
+            rmsEnv = rmsEnv * (1 - envAlpha) + absS * envAlpha;
+
+            const threshold = wasActive ? avgFloor * 0.85 : avgFloor;
+            const isActiveSegment = rmsEnv >= threshold;
+            lastSampleActive = isActiveSegment;
+
+            if (isActiveSegment) {
+              activeSamplesInBlock += 1;
+              if (!wasActive) {
+                dspTelemetry.sonicSegmentCount += 1;
+              }
+              silenceRunSamples = 0;
+            } else {
+              silenceRunSamples += 1;
+            }
+            wasActive = isActiveSegment;
+
+            // Push incoming sample into ring buffer
+            ringBuf[writeIdx] = s;
+            writeIdx = (writeIdx + 1) % ringCap;
+            bufferedSamples = Math.min(ringCap, bufferedSamples + 1);
+
+            // Smoothly condense silence gaps while preserving lookahead cushion and active segments
+            let stepInt = 1;
+            if (!isActiveSegment && bufferedSamples > lookaheadCushion) {
+              const silenceSec = silenceRunSamples / sr;
+              if (silenceSec > 0.04) {
+                // Ramp skip speed smoothly over 60ms so boundary transitions stay click-free
+                const ramp = Math.min(1.0, (silenceSec - 0.04) / 0.06);
+                const extraSkip = avgCondense * (1.0 + hyperParams.s4Density * 2.5) * ramp;
+                const maxAvail = Math.max(1, bufferedSamples - lookaheadCushion);
+                stepInt = Math.min(maxAvail, Math.max(1, Math.round(1 + extraSkip)));
+              }
+            }
+
+            let outSample = 0;
+            if (bufferedSamples > 0) {
+              // Linearly interpolate fractional read pointer for smooth pitch/time boundary behavior
+              const idx0 = Math.floor(readIdx) % ringCap;
+              const idx1 = (idx0 + 1) % ringCap;
+              const frac = readIdx - Math.floor(readIdx);
+              outSample = ringBuf[idx0] * (1 - frac) + ringBuf[idx1] * frac;
+
+              const actualStep = Math.min(bufferedSamples, stepInt);
+              readIdx = (readIdx + actualStep) % ringCap;
+              bufferedSamples -= actualStep;
+            }
+
+            // Wave system rounds off segment transitions & adds real-time dynamic compression
+            wavePhase += phaseInc;
+            if (wavePhase > Math.PI * 2) wavePhase -= Math.PI * 2;
+
+            const targetGain = isActiveSegment
+              ? 1.0
+              : (1.0 - avgCondense * 0.55); // Non-destructive gap floor, preserves active peak dynamics
+
+            const smoothAlpha = 0.002 + (1.0 - avgRound) * 0.025;
+            spliceSmoothEnv = spliceSmoothEnv * (1 - smoothAlpha) + targetGain * smoothAlpha;
+
+            // Wave rounding curve applied to dynamic envelope
+            const waveMod = Math.sin(wavePhase) * 0.08 * hyperParams.s4Density * avgRound;
+            const roundedEnvelope = Math.max(0.05, spliceSmoothEnv + waveMod);
+
+            // Real-time dynamic compression on density without clipping raw sonic peaks
+            const dynComp = 1.0 / (1.0 + hyperParams.s4Density * 0.25 * Math.max(0, Math.abs(outSample) - 0.7));
+            let processed = outSample * roundedEnvelope * dynComp;
+
+            // Gentle slew-rate smoothing on skipped gap boundaries to eliminate micro-clicks
+            if (stepInt > 1) {
+              processed = prevOutSample * 0.25 + processed * 0.75;
+            }
+            prevOutSample = processed;
+
+            output[i] = Math.max(-1.0, Math.min(1.0, processed));
+          }
+
+          dspTelemetry.isSilentGap = activeSamplesInBlock === 0 && !lastSampleActive;
+          dspTelemetry.gapCondensePct = Math.round(
+            Math.min(100, (silenceRunSamples > 0 ? avgCondense * (1.0 + hyperParams.s4Density * 0.6) * 65 : avgCondense * 35))
+          );
+          dspTelemetry.waveRoundVal = Math.sin(wavePhase) * avgRound;
+          dspTelemetry.envTrace[envTraceIdx] = Math.min(1.0, rmsEnv * 3.5);
+          envTraceIdx = (envTraceIdx + 1) % dspTelemetry.envTrace.length;
+        };
+
+        return proc;
+      }
+
+      const hudSourceEl = document.getElementById('hud-source');
+      const btnSynth = document.getElementById('btn-synth');
+      const btnMic = document.getElementById('btn-mic');
+
+      function updateSourceHud() {
+        const active = [];
+        if (isMicActive) active.push('LIVE MIC');
+        if (isSynthPlaying) active.push('432Hz DRONE');
+        if (uploadedAudioEl && !uploadedAudioEl.paused) active.push('MP3 STREAM');
+        hudSourceEl.textContent = active.length > 0 ? active.join(' + ') : 'NONE / STANDBY';
+      }
+
+      function initAudio() {
+        try {
+          if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.72;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            hyperProcessor = createHyperCompressorNode(audioCtx);
+            hyperGainNode = audioCtx.createGain();
+            hyperGainNode.gain.value = 1.0;
+
+            // Tap post-processor spectrum so FFT scope & 9D mesh react to condensed segments
+            hyperProcessor.connect(analyser);
+            hyperProcessor.connect(hyperGainNode);
+            hyperGainNode.connect(audioCtx.destination);
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return true;
+        } catch (err) {
+          showBanner('Web Audio unavailable in this browser context.');
+          return false;
+        }
+      }
+
+      function stopSynth() {
+        synthNodes.forEach((n) => {
+          try {
+            n.stop();
+            n.disconnect();
+          } catch (_) {}
+        });
+        synthNodes = [];
+        if (synthGain) {
+          try { synthGain.disconnect(); } catch (_) {}
+          synthGain = null;
+        }
+        isSynthPlaying = false;
+        btnSynth.textContent = '▶ 432Hz DRONE';
+        btnSynth.classList.remove('bg-amber-400/35', 'border-amber-200');
+      }
+
+      function stopMic() {
+        if (micSource) {
+          try { micSource.disconnect(); } catch (_) {}
+          micSource = null;
+        }
+        if (micStream) {
+          micStream.getTracks().forEach((track) => track.stop());
+          micStream = null;
+        }
+        isMicActive = false;
+        btnMic.textContent = '🎙 LIVE MIC';
+        btnMic.classList.remove('bg-sky-500/30', 'border-sky-400', 'text-sky-100');
+      }
+
+      btnSynth.addEventListener('click', () => {
+        if (!initAudio()) return;
+
+        if (isSynthPlaying) {
+          stopSynth();
+          updateSourceHud();
+          showBanner('432Hz Sovereign Drone stopped.');
+          return;
+        }
+
+        try {
+          const freqs = [54, 108, 216, 432];
+          synthGain = audioCtx.createGain();
+          synthGain.gain.value = 0.14;
+          synthGain.connect(hyperProcessor);
+
+          freqs.forEach((f, idx) => {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = idx === 0 ? 'sine' : 'triangle';
+            osc.frequency.value = isBluePhaseActive ? f * 1.015 : f;
+            g.gain.value = 1 / (idx + 1);
+            osc.connect(g);
+            g.connect(synthGain);
+            osc.start();
+            synthNodes.push(osc);
+          });
+
+          isSynthPlaying = true;
+          btnSynth.textContent = '■ STOP DRONE';
+          btnSynth.classList.add('bg-amber-400/35', 'border-amber-200');
+          updateSourceHud();
+          showBanner('432Hz Drone routed through Hyper-Compressor.');
+        } catch (err) {
+          showBanner('Could not start harmonic synth.');
+        }
+      });
+
+      btnMic.addEventListener('click', async () => {
+        if (isMicActive) {
+          stopMic();
+          updateSourceHud();
+          showBanner('Microphone input muted.');
+          return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showBanner('Microphone API not supported in this browser.');
+          return;
+        }
+
+        if (!initAudio()) return;
+
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+          micSource = audioCtx.createMediaStreamSource(micStream);
+          micSource.connect(hyperProcessor);
+
+          isMicActive = true;
+          btnMic.textContent = '● MIC ON';
+          btnMic.classList.add('bg-sky-500/30', 'border-sky-400', 'text-sky-100');
+          updateSourceHud();
+          showBanner('Live mic routed into Silence-Gap Hyper-Compressor.');
+        } catch (err) {
+          showBanner('Microphone permission denied or unavailable.');
+        }
+      });
+
+      const inputAudio = document.getElementById('input-audio');
+      inputAudio.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!initAudio()) return;
+
+        try {
+          if (uploadedAudioEl) {
+            uploadedAudioEl.pause();
+            if (uploadedAudioEl.src) {
+              URL.revokeObjectURL(uploadedAudioEl.src);
+            }
+          }
+          if (uploadedSource) {
+            try { uploadedSource.disconnect(); } catch (_) {}
+            uploadedSource = null;
+          }
+
+          const url = URL.createObjectURL(file);
+          uploadedAudioEl = new Audio(url);
+          uploadedAudioEl.crossOrigin = 'anonymous';
+          uploadedSource = audioCtx.createMediaElementSource(uploadedAudioEl);
+          uploadedSource.connect(hyperProcessor);
+
+          uploadedAudioEl.addEventListener('play', updateSourceHud);
+          uploadedAudioEl.addEventListener('pause', updateSourceHud);
+          uploadedAudioEl.addEventListener('ended', updateSourceHud);
+
+          uploadedAudioEl.play().then(() => {
+            updateSourceHud();
+            showBanner(`Hyper-compressing silence gaps in: ${file.name}`);
+          }).catch(() => {
+            showBanner('Tap again or check audio file playback permission.');
+          });
+        } catch (err) {
+          showBanner('Unable to process uploaded audio file.');
+        }
+      });
+
+      // --- 5. Audio Sensitivity Presets, Beat Detection & HUD Visualizations ---
+      const PRESETS = {
+        bass: {
+          label: 'BASS CLUB',
+          hint: 'SUB 20–150Hz',
+          minFloor: 0.15,
+          sensitivity: 1.40,
+          cooldown: 0.25,
+          bassWeight: 1.0,
+          midWeight: 0.15,
+          nodeHitThreshold: 0.34,
+          banner: 'Preset: BASS CLUB — tuned for heavy sub-bass & kick transients.'
+        },
+        vocal: {
+          label: 'VOCAL / VOICE',
+          hint: 'VOICE + MID',
+          minFloor: 0.08,
+          sensitivity: 1.22,
+          cooldown: 0.19,
+          bassWeight: 0.45,
+          midWeight: 0.85,
+          nodeHitThreshold: 0.24,
+          banner: 'Preset: VOCAL / VOICE — tuned for speech syllables & mid-band peaks.'
+        },
+        quiet: {
+          label: 'QUIET ROOM',
+          hint: 'LOW-GAIN MIC',
+          minFloor: 0.035,
+          sensitivity: 1.15,
+          cooldown: 0.22,
+          bassWeight: 0.65,
+          midWeight: 0.65,
+          nodeHitThreshold: 0.15,
+          banner: 'Preset: QUIET ROOM — high-sensitivity threshold for soft mic input.'
+        }
+      };
+
+      let activePresetKey = 'bass';
+      let currentPreset = PRESETS.bass;
+      let autoBeatEnabled = true;
+      let beatSensitivity = currentPreset.sensitivity;
+      let beatCount = 0;
+      let transientEnergyAvg = 0.0;
+      let lastBeatRealTime = -10.0;
+
+      const sliderBeatSens = document.getElementById('slider-beat-sens');
+      const valBeatSens = document.getElementById('val-beat-sens');
+      const hudPresetEl = document.getElementById('hud-preset');
+      const presetBandHintEl = document.getElementById('preset-band-hint');
+
+      function applySensitivityPreset(key, announce = true) {
+        const preset = PRESETS[key];
+        if (!preset) return;
+        activePresetKey = key;
+        currentPreset = preset;
+        beatSensitivity = preset.sensitivity;
+        transientEnergyAvg = 0.0;
+
+        if (sliderBeatSens) sliderBeatSens.value = preset.sensitivity.toFixed(2);
+        if (valBeatSens) valBeatSens.textContent = preset.sensitivity.toFixed(2) + 'x';
+        if (hudPresetEl) hudPresetEl.textContent = preset.label;
+        if (presetBandHintEl) presetBandHintEl.textContent = preset.hint;
+
+        document.querySelectorAll('.preset-btn').forEach((btn) => {
+          const isSelected = btn.dataset.preset === key;
+          btn.classList.toggle('bg-amber-500/30', isSelected);
+          btn.classList.toggle('border-amber-400', isSelected);
+          btn.classList.toggle('text-amber-100', isSelected);
+          btn.classList.toggle('font-bold', isSelected);
+          btn.classList.toggle('border-amber-500/30', !isSelected);
+          btn.classList.toggle('text-amber-300', !isSelected);
+        });
+
+        if (announce) {
+          showBanner(preset.banner);
+        }
+      }
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          applySensitivityPreset(btn.dataset.preset, true);
+        });
+      });
+
+      const spectrumCanvas = document.getElementById('fft-spectrum-canvas');
+      const spectrumCtx = spectrumCanvas.getContext('2d');
+      const beatEnergyBar = document.getElementById('beat-energy-bar');
+      const beatThresholdMarker = document.getElementById('beat-threshold-marker');
+      const hudBeatThresh = document.getElementById('hud-beat-thresh');
+
+      function resizeSpectrumCanvas() {
+        if (!spectrumCanvas) return;
+        const rect = spectrumCanvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.max(1, Math.floor(rect.width * dpr));
+        const h = Math.max(1, Math.floor(rect.height * dpr));
+        if (spectrumCanvas.width !== w || spectrumCanvas.height !== h) {
+          spectrumCanvas.width = w;
+          spectrumCanvas.height = h;
+        }
+      }
+
+      function renderSpectrumAndBeatMeter(meterEnergy, effectiveThreshold, blueMix) {
+        resizeSpectrumCanvas();
+
+        const clampedEnergyPct = Math.max(0, Math.min(100, meterEnergy * 100));
+        const clampedThreshPct = Math.max(2, Math.min(96, effectiveThreshold * 100));
+        beatEnergyBar.style.width = clampedEnergyPct.toFixed(1) + '%';
+        beatThresholdMarker.style.left = clampedThreshPct.toFixed(1) + '%';
+        hudBeatThresh.textContent = 'THR: ' + clampedThreshPct.toFixed(1) + '%';
+
+        if (blueMix > 0.5) {
+          beatEnergyBar.className = 'h-full w-0 bg-gradient-to-r from-sky-500 via-cyan-300 to-white transition-[width] duration-75';
+        } else {
+          beatEnergyBar.className = 'h-full w-0 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-100 transition-[width] duration-75';
+        }
+
+        if (!spectrumCtx) return;
+        const w = spectrumCanvas.width;
+        const h = spectrumCanvas.height;
+        spectrumCtx.clearRect(0, 0, w, h);
+
+        // Draw 28 FFT spectrum bars + wave-rounded envelope curve across the scope
+        const binCount = 28;
+        const gap = Math.max(1, Math.floor(w / (binCount * 5)));
+        const barWidth = Math.max(2, (w - gap * (binCount - 1)) / binCount);
+
+        for (let i = 0; i < binCount; i++) {
+          let norm = 0;
+          if (analyser && dataArray) {
+            const idx = Math.min(dataArray.length - 1, Math.floor((i / binCount) * 96));
+            norm = dataArray[idx] / 255;
+          } else {
+            norm = 0.06 + 0.04 * Math.sin(uniforms.uTime.value * 2.2 + i * 0.35);
+          }
+
+          const barH = Math.max(2, norm * (h - 4));
+          const x = i * (barWidth + gap);
+          const y = h - barH;
+
+          spectrumCtx.fillStyle = blueMix > 0.5
+            ? 'rgba(56, 189, 248, 0.55)'
+            : 'rgba(245, 158, 11, 0.55)';
+          spectrumCtx.fillRect(x, y, barWidth, barH);
+        }
+
+        // Overlay wave-rounded envelope curve
+        spectrumCtx.beginPath();
+        const traceLen = dspTelemetry.envTrace.length;
+        for (let i = 0; i < traceLen; i++) {
+          const sampleIdx = (envTraceIdx + i) % traceLen;
+          const v = dspTelemetry.envTrace[sampleIdx];
+          const px = (i / (traceLen - 1)) * w;
+          const py = h - 3 - v * (h - 6);
+          if (i === 0) spectrumCtx.moveTo(px, py);
+          else spectrumCtx.lineTo(px, py);
+        }
+        spectrumCtx.strokeStyle = blueMix > 0.5 ? '#e0f2fe' : '#fef08a';
+        spectrumCtx.lineWidth = 2;
+        spectrumCtx.stroke();
+      }
+
+      const btnAutoBeat = document.getElementById('btn-auto-beat');
+      const hudBeatsEl = document.getElementById('hud-beats');
+
+      btnAutoBeat.addEventListener('click', () => {
+        autoBeatEnabled = !autoBeatEnabled;
+        btnAutoBeat.textContent = autoBeatEnabled
+          ? '◎ AUTO BEAT SHOCKWAVES: ON'
+          : '◎ AUTO BEAT SHOCKWAVES: OFF';
+        btnAutoBeat.classList.toggle('bg-amber-500/25', autoBeatEnabled);
+        btnAutoBeat.classList.toggle('border-amber-400', autoBeatEnabled);
+        btnAutoBeat.classList.toggle('border-amber-500/30', !autoBeatEnabled);
+        showBanner(autoBeatEnabled ? 'Auto beat-triggered shockwaves enabled.' : 'Auto beat-triggered shockwaves paused.');
+      });
+
+      sliderBeatSens.addEventListener('input', (e) => {
+        beatSensitivity = parseFloat(e.target.value);
+        valBeatSens.textContent = beatSensitivity.toFixed(2) + 'x';
+      });
+
+      // --- 6. Shader & HUD Controls ---
+      let speedMultiplier = 1.0;
+
+      document.getElementById('slider-depth').addEventListener('input', (e) => {
+        uniforms.uDepth.value = parseFloat(e.target.value);
+        document.getElementById('val-depth').textContent = uniforms.uDepth.value.toFixed(2);
+      });
+
+      document.getElementById('slider-tension').addEventListener('input', (e) => {
+        uniforms.uTension.value = parseFloat(e.target.value);
+        document.getElementById('val-tension').textContent = uniforms.uTension.value.toFixed(2);
+      });
+
+      document.getElementById('slider-speed').addEventListener('input', (e) => {
+        speedMultiplier = parseFloat(e.target.value);
+        document.getElementById('val-speed').textContent = speedMultiplier.toFixed(2);
+      });
+
+      document.querySelectorAll('.mode-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode = parseInt(btn.dataset.mode, 10);
+          uniforms.uMode.value = mode;
+          coreMat.wireframe = (mode === 1);
+
+          document.querySelectorAll('.mode-btn').forEach((b) => {
+            b.classList.remove('bg-amber-500/30', 'border-amber-400', 'text-amber-100', 'font-bold');
+            b.classList.add('border-amber-500/30', 'text-amber-300');
+          });
+          btn.classList.remove('border-amber-500/30', 'text-amber-300');
+          btn.classList.add('bg-amber-500/30', 'border-amber-400', 'text-amber-100', 'font-bold');
+        });
+      });
+
+      const btnBluePhase = document.getElementById('btn-blue-phase');
+      const btnBlueLabel = document.getElementById('btn-blue-label');
+      const hudBlueState = document.getElementById('hud-blue-state');
+      const telemetryPanel = document.getElementById('telemetry-panel');
+      const controlsPanel = document.getElementById('controls-panel');
+      const telemetryDot = document.getElementById('telemetry-dot');
+
+      btnBluePhase.addEventListener('click', () => {
+        isBluePhaseActive = !isBluePhaseActive;
+        blueTargetMix = isBluePhaseActive ? 1.0 : 0.0;
+        triggerShockwave(false);
+
+        btnBluePhase.classList.toggle('engaged', isBluePhaseActive);
+        telemetryPanel.classList.toggle('blue-active', isBluePhaseActive);
+        controlsPanel.classList.toggle('blue-active', isBluePhaseActive);
+
+        if (isBluePhaseActive) {
+          btnBlueLabel.textContent = 'BLUE PHASE ENGAGED // PULSE';
+          hudBlueState.textContent = 'ACTIVE (ELECTRIC BLUE)';
+          hudBlueState.className = 'text-sky-300 font-bold text-right';
+          telemetryDot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping shrink-0';
+          cageMat.color.setHex(0x38bdf8);
+          pMat.color.setHex(0x7dd3fc);
+          gridHelper.setColors(0x0284c7, 0x082f49);
+          showBanner('Blue Phase / Sovereign Blue Pulse engaged.');
+        } else {
+          btnBlueLabel.textContent = 'BLUE PHASE // SOVEREIGN PULSE';
+          hudBlueState.textContent = 'STANDBY (AMBER)';
+          hudBlueState.className = 'text-sky-400 font-semibold text-right';
+          telemetryDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0';
+          cageMat.color.setHex(0xf59e0b);
+          pMat.color.setHex(0xfbbf24);
+          gridHelper.setColors(0xd97706, 0x291804);
+          showBanner('Returned to Amber Sovereign baseline.');
+        }
+      });
+
+      document.getElementById('btn-pulse').addEventListener('click', () => {
+        triggerShockwave(true);
+        amberMesh.rotation.z += Math.PI / 2;
+        showBanner('Zero-crossing +1D phase snap emitted.');
+      });
+
+      function setupCollapse(btnId, bodyId) {
+        const btn = document.getElementById(btnId);
+        const body = document.getElementById(bodyId);
+        btn.addEventListener('click', () => {
+          const isHidden = body.classList.toggle('hidden');
+          btn.textContent = isHidden ? '[+]' : '[−]';
+          if (!isHidden) {
+            resizeSpectrumCanvas();
+          }
+        });
+      }
+      setupCollapse('toggle-telemetry', 'telemetry-body');
+      setupCollapse('toggle-controls', 'controls-body');
+
+      window.addEventListener('resize', () => {
+        const w = Math.max(1, window.innerWidth);
+        const h = Math.max(1, window.innerHeight);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        resizeSpectrumCanvas();
+      });
+
+      // --- 7. Main Render, Frequency-Zoned Cloud & Beat Detection Loop ---
+      let lastTime = 0;
+      let wallClockSec = 0;
+      let loopStarted = false;
+      let smoothedMeterEnergy = 0;
+
+      const hudSegStateEl = document.getElementById('hud-seg-state');
+      const hudGapCondEl = document.getElementById('hud-gap-cond');
+      const hudWaveRoundEl = document.getElementById('hud-wave-round');
+      const hudBandsEl = document.getElementById('hud-bands');
+      const hudSonicSegsEl = document.getElementById('hud-sonic-segs');
+
+      function updateFrequencyCloud(t, bassVal, midVal, trebleVal) {
+        const posAttr = pGeo.getAttribute('position');
+        const arr = posAttr.array;
+
+        pMat.size = 0.042 + trebleVal * 0.055;
+
+        for (let i = 0; i < particleCount; i++) {
+          const i3 = i * 3;
+          const bx = pBasePos[i3];
+          const by = pBasePos[i3 + 1];
+          const bz = pBasePos[i3 + 2];
+
+          const radialDist = Math.hypot(bx, bz) + 0.001;
+          const bassPush = 1.0 + bassVal * 0.22 * (1.0 / (1.0 + Math.abs(by) * 0.25));
+
+          const midBandFactor = Math.exp(-Math.pow(by * 0.35, 2));
+          const midAngle = midVal * 0.85 * midBandFactor;
+          const cosM = Math.cos(midAngle);
+          const sinM = Math.sin(midAngle);
+          const rx = bx * cosM - bz * sinM;
+          const rz = bx * sinM + bz * cosM;
+
+          const trebleFactor = Math.min(1.0, Math.abs(by) / 5.0 + 0.25);
+          const jitter = trebleVal * 0.35 * trebleFactor;
+          const jx = Math.sin(t * 9.0 + i * 1.7) * jitter;
+          const jy = Math.cos(t * 8.3 + i * 2.3) * jitter;
+          const jz = Math.sin(t * 7.7 + i * 3.1) * jitter;
+
+          arr[i3]     = rx * bassPush + jx;
+          arr[i3 + 1] = by + Math.sin(t * 1.4 + radialDist) * 0.12 + jy;
+          arr[i3 + 2] = rz * bassPush + jz;
+        }
+        posAttr.needsUpdate = true;
+
+        const cageScale = 1.0 + bassVal * 0.10;
+        phaseCage.scale.set(cageScale, cageScale, cageScale);
+        phaseCage.rotation.y = -t * (0.15 + midVal * 0.45);
+        phaseCage.rotation.z = t * (0.10 + trebleVal * 0.55);
+      }
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        const safeNow = typeof now === 'number' ? now : performance.now();
+        const dt = lastTime > 0 ? Math.min((safeNow - lastTime) * 0.001, 0.1) : 0.016;
+        lastTime = safeNow;
+        wallClockSec += dt;
+
+        const activeCondense = hyperParams.enabled
+          ? (hyperParams.s1Condense + hyperParams.s2Condense + hyperParams.s3Condense) / 3
+          : 0;
+        const activeWaveRound = hyperParams.enabled
+          ? (hyperParams.s1Round + hyperParams.s2Round + hyperParams.s3Round + hyperParams.s4SpliceRound) / 4
+          : 0;
+
+        uniforms.uGapCondense.value = activeCondense;
+        uniforms.uWaveRound.value = activeWaveRound;
+
+        // Condensing silence gaps subtly accelerates manifold time progression during active flow
+        const gapTimeBoost = hyperParams.enabled ? (1.0 + activeCondense * hyperParams.s4Density * 0.35) : 1.0;
+        uniforms.uTime.value += dt * speedMultiplier * gapTimeBoost;
+        const t = uniforms.uTime.value;
+
+        uniforms.uBlueMix.value = THREE.MathUtils.lerp(
+          uniforms.uBlueMix.value,
+          blueTargetMix,
+          0.08
+        );
+
+        let bass = 0;
+        let mid = 0;
+        let treble = 0;
+        if (analyser && dataArray) {
+          analyser.getByteFrequencyData(dataArray);
+          for (let i = 0; i < 12; i++) bass += dataArray[i];
+          for (let i = 12; i < 48; i++) mid += dataArray[i];
+          for (let i = 48; i < 110; i++) treble += dataArray[i];
+          bass = (bass / (12 * 255)) * (0.5 + hyperParams.s1Condense * 0.8);
+          mid = (mid / (36 * 255)) * (0.5 + hyperParams.s2Condense * 0.8);
+          treble = (treble / (62 * 255)) * (0.5 + hyperParams.s3Condense * 0.8);
+        }
+
+        const weightSum = Math.max(0.1, currentPreset.bassWeight + currentPreset.midWeight);
+        const rawTransientEnergy =
+          (bass * currentPreset.bassWeight + mid * currentPreset.midWeight) / weightSum;
+
+        const effectiveThreshold = Math.max(
+          currentPreset.minFloor,
+          transientEnergyAvg * beatSensitivity
+        );
+
+        const hasAudioInput = isMicActive || isSynthPlaying || (uploadedAudioEl && !uploadedAudioEl.paused);
+        if (hasAudioInput) {
+          const isTransientPeak =
+            rawTransientEnergy >= effectiveThreshold &&
+            (wallClockSec - lastBeatRealTime) > currentPreset.cooldown;
+
+          if (autoBeatEnabled && isTransientPeak) {
+            lastBeatRealTime = wallClockSec;
+            beatCount += 1;
+            hudBeatsEl.textContent = beatCount;
+            triggerShockwave(rawTransientEnergy > currentPreset.nodeHitThreshold);
+          }
+
+          const alpha = rawTransientEnergy > transientEnergyAvg ? 0.045 : 0.13;
+          transientEnergyAvg = transientEnergyAvg * (1 - alpha) + rawTransientEnergy * alpha;
+        } else {
+          transientEnergyAvg *= 0.95;
+        }
+
+        const boostGain = activePresetKey === 'quiet' ? 1.65 : activePresetKey === 'vocal' ? 1.25 : 1.0;
+        const displayedEnergy = Math.min(1.0, rawTransientEnergy * boostGain);
+        smoothedMeterEnergy = THREE.MathUtils.lerp(smoothedMeterEnergy, displayedEnergy, 0.24);
+
+        uniforms.uBass.value = THREE.MathUtils.lerp(uniforms.uBass.value, bass, 0.22);
+        uniforms.uMid.value = THREE.MathUtils.lerp(uniforms.uMid.value, mid, 0.22);
+        uniforms.uTreble.value = THREE.MathUtils.lerp(uniforms.uTreble.value, treble, 0.22);
+
+        amberMesh.rotation.x = t * 0.22;
+        amberMesh.rotation.y = t * 0.34;
+        dustSystem.rotation.y = t * 0.04;
+
+        updateFrequencyCloud(t, uniforms.uBass.value, uniforms.uMid.value, uniforms.uTreble.value);
+
+        for (let i = 0; i < spawnedNodes.length; i++) {
+          const node = spawnedNodes[i];
+          node.position.add(node.userData.vel);
+          node.userData.vel.multiplyScalar(0.985);
+          node.rotation.x += 0.04;
+          node.rotation.y += 0.05;
+        }
+
+        hudSegStateEl.textContent = !hyperParams.enabled
+          ? 'BYPASSED'
+          : (dspTelemetry.isSilentGap ? 'CONDENSING GAP' : 'SONIC SEGMENT');
+        hudGapCondEl.textContent = (hyperParams.enabled ? dspTelemetry.gapCondensePct : 0) + '%';
+        hudWaveRoundEl.textContent = dspTelemetry.waveRoundVal.toFixed(3);
+        hudBandsEl.textContent =
+          Math.round(uniforms.uBass.value * 100) + '% · ' +
+          Math.round(uniforms.uMid.value * 100) + '% · ' +
+          Math.round(uniforms.uTreble.value * 100) + '%';
+        hudSonicSegsEl.textContent = 'SEGS: ' + dspTelemetry.sonicSegmentCount;
+
+        renderSpectrumAndBeatMeter(
+          smoothedMeterEnergy,
+          Math.min(0.96, effectiveThreshold * boostGain),
+          uniforms.uBlueMix.value
+        );
+
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      function startLoopOnce() {
+        if (loopStarted) return;
+        loopStarted = true;
+        animate(performance.now());
+      }
+
+      window.addEventListener('load', startLoopOnce);
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        startLoopOnce();
+      }
+    })();
+  </script>
+</body>
+</html>

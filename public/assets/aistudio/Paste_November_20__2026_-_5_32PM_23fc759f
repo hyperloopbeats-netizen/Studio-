@@ -1,0 +1,3149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AIM-X // REASON STUDIO RACK // 9D AMBER MESH & HYPER-COMPRESSOR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rack-bg: #0c0a08;
+      --chassis-dark: #161310;
+      --chassis-mid: #201b16;
+      --chassis-light: #2b241d;
+      --amber: #f59e0b;
+      --amber-bright: #fbbf24;
+      --blue: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Share Tech Mono', 'Inter', monospace;
+      background-color: #070605;
+      color: #fbbf24;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Brushed dark aluminum chassis texture */
+    .rack-chassis {
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.015) 0px,
+          rgba(255, 255, 255, 0.015) 1px,
+          transparent 1px,
+          transparent 3px
+        ),
+        linear-gradient(180deg, #211c16 0%, #16120e 50%, #110e0b 100%);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 220, 150, 0.12),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.75),
+        0 8px 24px rgba(0, 0, 0, 0.65);
+    }
+
+    .rack-chassis.blue-mode {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow:
+        inset 0 1px 0 rgba(186, 230, 253, 0.15),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.75),
+        0 8px 28px rgba(2, 132, 199, 0.22);
+    }
+
+    /* Rack ears & screws */
+    .rack-ear {
+      background: linear-gradient(90deg, #120f0c, #1d1813 50%, #100d0a);
+      border-right: 1px solid rgba(245, 158, 11, 0.18);
+    }
+    .rack-ear-right {
+      background: linear-gradient(90deg, #100d0a, #1d1813 50%, #120f0c);
+      border-left: 1px solid rgba(245, 158, 11, 0.18);
+    }
+
+    .rack-screw {
+      width: 12px;
+      height: 12px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 35%, #6b5d4d, #27211b 70%, #0f0c09 100%);
+      border: 1px solid #090705;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+    .rack-screw::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 2px;
+      right: 2px;
+      height: 1.5px;
+      background: #0c0a08;
+      transform: translateY(-50%) rotate(32deg);
+    }
+
+    /* Recessed LCD screen */
+    .lcd-screen {
+      background: radial-gradient(ellipse at center, #1b1306 0%, #0b0702 100%);
+      border: 1px solid rgba(245, 158, 11, 0.42);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(245, 158, 11, 0.12);
+    }
+    .blue-mode .lcd-screen {
+      background: radial-gradient(ellipse at center, #061826 0%, #020911 100%);
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 12px rgba(56, 189, 248, 0.18);
+    }
+
+    /* Hardware Fader / Range Slider */
+    input[type="range"].hw-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #0a0806;
+      height: 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9);
+      outline: none;
+    }
+    input[type="range"].hw-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 18px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #fbbf24 0%, #b45309 100%);
+      border: 1px solid #fef08a;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.85), 0 0 8px rgba(251, 191, 36, 0.45);
+    }
+    input[type="range"].hw-slider::-moz-range-thumb {
+      width: 14px;
+      height: 18px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #fbbf24 0%, #b45309 100%);
+      border: 1px solid #fef08a;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.85);
+    }
+    .blue-mode input[type="range"].hw-slider::-webkit-slider-thumb {
+      background: linear-gradient(180deg, #7dd3fc 0%, #0284c7 100%);
+      border-color: #e0f2fe;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.85), 0 0 8px rgba(56, 189, 248, 0.55);
+    }
+
+    /* Tactile hardware button */
+    .hw-btn {
+      background: linear-gradient(180deg, #2d261e 0%, #1b1611 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 3px rgba(0, 0, 0, 0.7);
+      transition: all 0.12s ease;
+    }
+    .hw-btn:active {
+      transform: translateY(1px);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.85);
+    }
+    .hw-btn.active {
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.42) 0%, rgba(180, 83, 9, 0.55) 100%);
+      border-color: #fbbf24;
+      color: #fef3c7;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .hw-btn.blue-active {
+      background: linear-gradient(180deg, rgba(14, 165, 233, 0.55) 0%, rgba(3, 105, 161, 0.7) 100%);
+      border-color: #7dd3fc;
+      color: #f0f9ff;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    /* Step Sequencer Pads */
+    .step-pad {
+      background: #14100c;
+      border: 1px solid rgba(245, 158, 11, 0.22);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.85);
+      transition: transform 0.08s ease, background-color 0.1s ease;
+    }
+    .step-pad.beat-group {
+      border-top: 2px solid rgba(245, 158, 11, 0.5);
+    }
+    .step-pad.on {
+      background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+      border-color: #fef08a;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+    }
+    .blue-mode .step-pad.on {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      border-color: #e0f2fe;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    }
+    .step-pad.playing {
+      outline: 2px solid #ffffff;
+      transform: scale(1.06);
+      z-index: 2;
+    }
+
+    /* 1/4" TRS & CV Jacks for Rear Patch Bay */
+    .trs-jack {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      background: radial-gradient(circle, #050505 34%, #52525b 38%, #a1a1aa 52%, #27272a 68%, #09090b 100%);
+      border: 2px solid #18181b;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .trs-jack:hover {
+      transform: scale(1.12);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.75);
+    }
+    .trs-jack.cv-jack {
+      width: 22px;
+      height: 22px;
+      border-color: #0284c7;
+    }
+    .trs-jack.selected-jack {
+      box-shadow: 0 0 0 3px #38bdf8, 0 0 16px #38bdf8;
+    }
+
+    /* Fullscreen viewport popout mode */
+    .viewport-popout {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 60 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0806;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3a2e22;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f59e0b;
+    }
+  </style>
+</head>
+<body id="app-root" class="min-h-screen bg-[#070605] text-amber-400 flex flex-col">
+
+  <!-- Non-blocking Studio Toast Banner -->
+  <div id="status-banner" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-[#14100c]/95 border border-amber-400/70 text-xs text-amber-100 shadow-[0_0_24px_rgba(245,158,11,0.35)] backdrop-blur-md max-w-[92vw] text-center">
+    <span id="status-banner-text">AIM-X Reason Studio Rack Initialized</span>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP MASTER TRANSPORT & STUDIO HEADER BAR (STICKY)                     -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 w-full bg-[#110e0b]/95 backdrop-blur-md border-b border-amber-500/35 shadow-[0_4px_20px_rgba(0,0,0,0.85)]">
+    <div class="max-w-[1440px] mx-auto px-2 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+
+      <!-- Brand & Audio Engine Boot -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-md bg-gradient-to-br from-amber-500 to-amber-800 border border-amber-300 flex items-center justify-center shadow-[0_0_14px_rgba(245,158,11,0.45)]">
+          <span class="text-black font-extrabold text-sm">AX</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-xs sm:text-sm font-bold tracking-widest text-amber-200">AIM-X // REASON RACK</h1>
+            <span id="engine-led" class="w-2 h-2 rounded-full bg-amber-500/40"></span>
+          </div>
+          <p class="text-[10px] text-amber-400/70 hidden sm:block">9D AMBER MESH + SILENCE-GAP HYPER-COMPRESSOR STUDIO</p>
+        </div>
+      </div>
+
+      <!-- Master Transport Controls -->
+      <div class="flex items-center gap-1.5 bg-[#090705] px-2 py-1 rounded-lg border border-amber-500/25">
+        <button id="transport-play" type="button" class="hw-btn px-3 py-1.5 rounded text-xs font-bold text-emerald-300 flex items-center gap-1 cursor-pointer">
+          <span>▶</span> <span class="hidden sm:inline">PLAY</span>
+        </button>
+        <button id="transport-stop" type="button" class="hw-btn px-3 py-1.5 rounded text-xs font-bold text-rose-300 flex items-center gap-1 cursor-pointer">
+          <span>■</span> <span class="hidden sm:inline">STOP</span>
+        </button>
+
+        <!-- BPM Readout & Adjust -->
+        <div class="lcd-screen px-2 py-1 rounded flex items-center gap-1.5 ml-1">
+          <span class="text-[10px] text-amber-400/75">BPM</span>
+          <input id="transport-bpm" type="number" min="60" max="180" value="124" class="w-11 bg-transparent text-amber-200 font-bold text-xs text-center focus:outline-none" />
+          <div class="flex flex-col leading-none">
+            <button id="bpm-up" type="button" class="text-[9px] text-amber-300 hover:text-white px-0.5">▲</button>
+            <button id="bpm-down" type="button" class="text-[9px] text-amber-300 hover:text-white px-0.5">▼</button>
+          </div>
+        </div>
+
+        <!-- Step Counter LED -->
+        <div class="lcd-screen px-2 py-1 rounded hidden md:flex items-center gap-1.5">
+          <span class="text-[10px] text-amber-400/75">BAR.STEP</span>
+          <span id="transport-step-lcd" class="text-xs font-bold text-amber-200">01.01</span>
+        </div>
+      </div>
+
+      <!-- Master Volume, Stereo Peak Meter, DSP Load & RACK FLIP [TAB] -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Stereo L/R LED Peak Bars -->
+        <div class="hidden sm:flex flex-col gap-1 w-24 bg-[#090705] p-1.5 rounded border border-amber-500/25">
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] text-amber-400/80 w-2">L</span>
+            <div class="flex-1 h-1.5 bg-black rounded-sm overflow-hidden">
+              <div id="master-vu-l" class="h-full w-0 bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-[width] duration-75"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] text-amber-400/80 w-2">R</span>
+            <div class="flex-1 h-1.5 bg-black rounded-sm overflow-hidden">
+              <div id="master-vu-r" class="h-full w-0 bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-[width] duration-75"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Volume -->
+        <div class="hidden lg:flex items-center gap-1.5 bg-[#090705] px-2.5 py-1.5 rounded border border-amber-500/25">
+          <span class="text-[10px] text-amber-400/80">MST</span>
+          <input id="master-vol" type="range" min="0" max="1.25" step="0.01" value="0.85" class="hw-slider w-20" />
+          <span id="master-vol-val" class="text-[10px] text-amber-200 w-8 text-right">85%</span>
+        </div>
+
+        <!-- DSP Load Readout -->
+        <div class="lcd-screen px-2 py-1 rounded hidden xl:flex flex-col items-end">
+          <span class="text-[9px] text-amber-400/70">DSP / FPS</span>
+          <span id="dsp-load-readout" class="text-[11px] text-emerald-300 font-bold">14% · 60Hz</span>
+        </div>
+
+        <!-- RACK FLIP [TAB] BUTTON -->
+        <button id="btn-flip-rack" type="button" class="hw-btn px-3 py-1.5 rounded-md text-xs font-bold tracking-wider text-sky-300 border-sky-400/60 flex items-center gap-1.5 cursor-pointer" title="Press TAB or click to flip rack 180°">
+          <span>⇄</span>
+          <span id="flip-btn-label">FLIP RACK [TAB]</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN 19-INCH STUDIO RACK CONTAINER (FRONT PANEL VIEW)                 -->
+  <!-- ===================================================================== -->
+  <main id="rack-front-view" class="flex-1 w-full max-w-[1400px] mx-auto px-2 sm:px-4 py-4 space-y-3.5">
+
+    <!-- =================================================================== -->
+    <!-- UNIT 01 // AIM-M1 4-CHANNEL STUDIO MIXER & AUDIO INPUT DECK (2U)    -->
+    <!-- =================================================================== -->
+    <section class="rack-chassis rounded-lg overflow-hidden flex">
+      <!-- Left Rack Ear -->
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <!-- Unit Body -->
+      <div class="flex-1 min-w-0">
+        <!-- Unit Faceplate Header -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 01 // AIM-M1 4-CH STUDIO MIXER &amp; SOURCE BUS</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="hud-source" class="lcd-screen px-2 py-0.5 rounded text-[10px] text-amber-200 font-bold">BUS: STANDBY</span>
+            <button type="button" data-collapse="unit-01-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <!-- Unit Content -->
+        <div id="unit-01-body" class="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <!-- Channel 1: 432Hz Sovereign Drone Synth -->
+          <div class="bg-[#110e0b] border border-amber-500/25 rounded-lg p-2.5 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
+              <span class="text-[11px] font-bold text-amber-300">CH 1 // 432Hz DRONE</span>
+              <div class="flex gap-1">
+                <button id="ch1-mute" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-rose-300">M</button>
+                <button id="ch1-solo" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-200">S</button>
+              </div>
+            </div>
+
+            <button id="btn-synth" type="button" class="hw-btn w-full py-1.5 rounded text-xs font-bold text-amber-200">
+              ▶ ENGAGE 432Hz DRONE
+            </button>
+
+            <div class="space-y-1.5 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>GAIN LEVEL</span><span id="ch1-vol-val">75%</span></div>
+                <input id="ch1-vol" type="range" min="0" max="1.2" step="0.01" value="0.75" class="hw-slider w-full" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <div class="flex justify-between"><span>LOW EQ</span><span id="ch1-low-val">0dB</span></div>
+                  <input id="ch1-low" type="range" min="-12" max="12" step="1" value="0" class="hw-slider w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between"><span>HIGH EQ</span><span id="ch1-high-val">0dB</span></div>
+                  <input id="ch1-high" type="range" min="-12" max="12" step="1" value="0" class="hw-slider w-full" />
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between"><span>PAN L/R</span><span id="ch1-pan-val">C</span></div>
+                <input id="ch1-pan" type="range" min="-1" max="1" step="0.05" value="0" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel 2: Subtractor-9D Poly Synth -->
+          <div class="bg-[#110e0b] border border-amber-500/25 rounded-lg p-2.5 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
+              <span class="text-[11px] font-bold text-amber-300">CH 2 // SUBTRACTOR-9D</span>
+              <div class="flex gap-1">
+                <button id="ch2-mute" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-rose-300">M</button>
+                <button id="ch2-solo" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-200">S</button>
+              </div>
+            </div>
+
+            <div class="lcd-screen px-2 py-1 rounded text-[10px] text-center text-amber-300/90">
+              ROUTED FROM UNIT 02 SEQ
+            </div>
+
+            <div class="space-y-1.5 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>GAIN LEVEL</span><span id="ch2-vol-val">80%</span></div>
+                <input id="ch2-vol" type="range" min="0" max="1.2" step="0.01" value="0.80" class="hw-slider w-full" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <div class="flex justify-between"><span>LOW EQ</span><span id="ch2-low-val">+2dB</span></div>
+                  <input id="ch2-low" type="range" min="-12" max="12" step="1" value="2" class="hw-slider w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between"><span>HIGH EQ</span><span id="ch2-high-val">+1dB</span></div>
+                  <input id="ch2-high" type="range" min="-12" max="12" step="1" value="1" class="hw-slider w-full" />
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between"><span>PAN L/R</span><span id="ch2-pan-val">C</span></div>
+                <input id="ch2-pan" type="range" min="-1" max="1" step="0.05" value="0" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel 3: Redrum-X16 Drum Computer -->
+          <div class="bg-[#110e0b] border border-amber-500/25 rounded-lg p-2.5 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
+              <span class="text-[11px] font-bold text-amber-300">CH 3 // REDRUM-X16</span>
+              <div class="flex gap-1">
+                <button id="ch3-mute" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-rose-300">M</button>
+                <button id="ch3-solo" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-200">S</button>
+              </div>
+            </div>
+
+            <div class="lcd-screen px-2 py-1 rounded text-[10px] text-center text-amber-300/90">
+              ROUTED FROM UNIT 03 DRUMS
+            </div>
+
+            <div class="space-y-1.5 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>GAIN LEVEL</span><span id="ch3-vol-val">90%</span></div>
+                <input id="ch3-vol" type="range" min="0" max="1.2" step="0.01" value="0.90" class="hw-slider w-full" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <div class="flex justify-between"><span>LOW EQ</span><span id="ch3-low-val">+3dB</span></div>
+                  <input id="ch3-low" type="range" min="-12" max="12" step="1" value="3" class="hw-slider w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between"><span>HIGH EQ</span><span id="ch3-high-val">+2dB</span></div>
+                  <input id="ch3-high" type="range" min="-12" max="12" step="1" value="2" class="hw-slider w-full" />
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between"><span>PAN L/R</span><span id="ch3-pan-val">C</span></div>
+                <input id="ch3-pan" type="range" min="-1" max="1" step="0.05" value="0" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel 4: Live Mic & MP3 Audio Deck -->
+          <div class="bg-[#110e0b] border border-amber-500/25 rounded-lg p-2.5 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
+              <span class="text-[11px] font-bold text-amber-300">CH 4 // MIC &amp; MP3 DECK</span>
+              <div class="flex gap-1">
+                <button id="ch4-mute" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-rose-300">M</button>
+                <button id="ch4-solo" type="button" class="hw-btn px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-200">S</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <button id="btn-mic" type="button" class="hw-btn py-1.5 px-1 rounded text-[10px] font-bold text-amber-200">
+                🎙 LIVE MIC
+              </button>
+              <label class="hw-btn py-1.5 px-1 rounded text-[10px] font-bold text-amber-200 text-center cursor-pointer flex items-center justify-center">
+                📂 MP3 FILE
+                <input id="input-audio" type="file" accept="audio/*" class="hidden" />
+              </label>
+            </div>
+
+            <div class="space-y-1.5 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>GAIN LEVEL</span><span id="ch4-vol-val">95%</span></div>
+                <input id="ch4-vol" type="range" min="0" max="1.4" step="0.01" value="0.95" class="hw-slider w-full" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <div class="flex justify-between"><span>LOW EQ</span><span id="ch4-low-val">0dB</span></div>
+                  <input id="ch4-low" type="range" min="-12" max="12" step="1" value="0" class="hw-slider w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between"><span>HIGH EQ</span><span id="ch4-high-val">0dB</span></div>
+                  <input id="ch4-high" type="range" min="-12" max="12" step="1" value="0" class="hw-slider w-full" />
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between"><span>PAN L/R</span><span id="ch4-pan-val">C</span></div>
+                <input id="ch4-pan" type="range" min="-1" max="1" step="0.05" value="0" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Bus & Dynamics Limiter Strip -->
+          <div class="bg-[#15100a] border border-amber-400/40 rounded-lg p-2.5 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-amber-500/25 pb-1">
+              <span class="text-[11px] font-bold text-amber-200">MASTER BUS // LIMITER</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/50 text-emerald-300">SAFE</span>
+            </div>
+
+            <div class="lcd-screen p-2 rounded space-y-1 text-[10px]">
+              <div class="flex justify-between">
+                <span class="text-amber-400/75">SIGNAL CHAIN:</span>
+                <span class="text-amber-200 font-bold">M1 → HC-4X → RV7</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-amber-400/75">PEAK LIMITER:</span>
+                <span class="text-emerald-300">-0.3 dBFS</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>BUS DRIVE</span><span id="bus-drive-val">1.00x</span></div>
+                <input id="bus-drive" type="range" min="0.5" max="1.6" step="0.02" value="1.00" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between"><span>MASTER OUTPUT</span><span id="mixer-mst-val">85%</span></div>
+                <input id="mixer-mst-vol" type="range" min="0" max="1.25" step="0.01" value="0.85" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Rack Ear -->
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- UNIT 02 // SUBTRACTOR-9D POLYPHONIC SYNTHESIZER & STEP SEQUENCER    -->
+    <!-- =================================================================== -->
+    <section class="rack-chassis rounded-lg overflow-hidden flex">
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span id="subtractor-led" class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 02 // SUBTRACTOR-9D ANALOG SYNTHESIZER &amp; 16-STEP MATRIX</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="sub-trigger-btn" type="button" class="hw-btn px-2.5 py-0.5 rounded text-[10px] font-bold text-amber-200">⚡ AUDITION NOTE</button>
+            <button id="sub-clear-btn" type="button" class="hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">CLEAR</button>
+            <button type="button" data-collapse="unit-02-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <div id="unit-02-body" class="p-3 space-y-3">
+          <!-- Synth Engine Parameters -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-[10px]">
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <label class="block text-amber-400/80 mb-1">OSC 1 WAVE</label>
+              <select id="sub-osc1-wave" class="w-full bg-[#090705] border border-amber-500/35 rounded px-1.5 py-1 text-amber-200 text-[11px] focus:outline-none">
+                <option value="sawtooth" selected>SAWTOOTH</option>
+                <option value="square">SQUARE</option>
+                <option value="triangle">TRIANGLE</option>
+                <option value="sine">SINE</option>
+              </select>
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <label class="block text-amber-400/80 mb-1">OSC 2 WAVE</label>
+              <select id="sub-osc2-wave" class="w-full bg-[#090705] border border-amber-500/35 rounded px-1.5 py-1 text-amber-200 text-[11px] focus:outline-none">
+                <option value="square" selected>SQUARE (-1 OCT)</option>
+                <option value="sawtooth">SAWTOOTH</option>
+                <option value="triangle">TRIANGLE</option>
+                <option value="sine">SINE</option>
+              </select>
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <div class="flex justify-between mb-1"><span>OSC DETUNE</span><span id="sub-detune-val">14 ct</span></div>
+              <input id="sub-detune" type="range" min="0" max="50" step="1" value="14" class="hw-slider w-full" />
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <div class="flex justify-between mb-1"><span>LPF CUTOFF</span><span id="sub-cutoff-val">1150 Hz</span></div>
+              <input id="sub-cutoff" type="range" min="110" max="6500" step="10" value="1150" class="hw-slider w-full" />
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <div class="flex justify-between mb-1"><span>RESONANCE (Q)</span><span id="sub-reso-val">5.5</span></div>
+              <input id="sub-reso" type="range" min="0.5" max="18" step="0.5" value="5.5" class="hw-slider w-full" />
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <div class="flex justify-between mb-1"><span>ENV DECAY</span><span id="sub-decay-val">0.28s</span></div>
+              <input id="sub-decay" type="range" min="0.06" max="1.2" step="0.02" value="0.28" class="hw-slider w-full" />
+            </div>
+
+            <div class="bg-[#110e0b] p-2 rounded border border-amber-500/20">
+              <label class="block text-amber-400/80 mb-1">SCALE / ROOT</label>
+              <select id="sub-scale" class="w-full bg-[#090705] border border-amber-500/35 rounded px-1.5 py-1 text-amber-200 text-[11px] focus:outline-none">
+                <option value="minor" selected>A MINOR (432Hz)</option>
+                <option value="phrygian">A PHRYGIAN DARK</option>
+                <option value="pentatonic">A MINOR PENTATONIC</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 16-Step Melodic Sequencer Grid -->
+          <div class="bg-[#0f0c09] p-2.5 rounded-lg border border-amber-500/25">
+            <div class="flex items-center justify-between text-[10px] text-amber-400/80 mb-2">
+              <span>16-STEP BASS / LEAD PATTERN SEQUENCER (CLICK PADS TO TOGGLE, CLICK NOTE LABEL TO CYCLE PITCH)</span>
+              <span class="text-amber-300">SYNCED TO MASTER BPM</span>
+            </div>
+            <div id="sub-seq-grid" class="grid grid-cols-8 sm:grid-cols-16 gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- UNIT 03 // REDRUM-X16 ANALOG DRUM COMPUTER                          -->
+    <!-- =================================================================== -->
+    <section class="rack-chassis rounded-lg overflow-hidden flex">
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span id="redrum-led" class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 03 // REDRUM-X16 SYNTHESIZED DRUM COMPUTER</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button type="button" data-drum-preset="house" class="drum-preset-btn hw-btn active px-2 py-0.5 rounded text-[10px] font-bold">DEEP HOUSE</button>
+            <button type="button" data-drum-preset="techno" class="drum-preset-btn hw-btn px-2 py-0.5 rounded text-[10px] font-bold">9D TECHNO</button>
+            <button type="button" data-drum-preset="boombap" class="drum-preset-btn hw-btn px-2 py-0.5 rounded text-[10px] font-bold">BOOM BAP</button>
+            <button id="drum-clear-btn" type="button" class="hw-btn px-2 py-0.5 rounded text-[10px] text-rose-300">CLEAR</button>
+            <button type="button" data-collapse="unit-03-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <div id="unit-03-body" class="p-3 overflow-x-auto">
+          <div id="redrum-matrix" class="min-w-[680px] space-y-1.5"></div>
+        </div>
+      </div>
+
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- UNIT 04 // HC-4X SILENCE-GAP HYPER-COMPRESSOR (12-SLIDER MATRIX)    -->
+    <!-- =================================================================== -->
+    <section class="rack-chassis rounded-lg overflow-hidden flex">
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span id="hyper-led" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#fbbf24]"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 04 // HC-4X SILENCE-GAP HYPER-COMPRESSOR (12-SLIDER DSP)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-hyper-bypass" type="button" class="hw-btn active px-2.5 py-0.5 rounded text-[10px] font-bold">
+              HYPER DSP: ON
+            </button>
+            <button type="button" data-collapse="unit-04-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <div id="unit-04-body" class="p-3 space-y-3">
+          <!-- Top Telemetry Strip for Hyper-Compressor -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div class="lcd-screen p-2 rounded">
+              <div class="text-[9px] text-amber-400/75">SEGMENT STATE</div>
+              <div id="hud-seg-state" class="text-xs font-bold text-amber-200">SILENCE GAP</div>
+            </div>
+            <div class="lcd-screen p-2 rounded">
+              <div class="text-[9px] text-amber-400/75">SILENCE CONDENSED</div>
+              <div id="hud-gap-cond" class="text-xs font-bold text-amber-200">0%</div>
+            </div>
+            <div class="lcd-screen p-2 rounded">
+              <div class="text-[9px] text-amber-400/75">WAVE ROUND (ψ)</div>
+              <div id="hud-wave-round" class="text-xs font-bold text-amber-200">0.000</div>
+            </div>
+            <div class="lcd-screen p-2 rounded">
+              <div class="text-[9px] text-amber-400/75">SONIC SEGMENTS</div>
+              <div id="hud-sonic-segs" class="text-xs font-bold text-amber-200">SEGS: 0</div>
+            </div>
+            <!-- Sensitivity Presets -->
+            <div class="col-span-2 sm:col-span-1 bg-[#110e0b] p-1.5 rounded border border-amber-500/25 flex flex-col justify-between">
+              <div class="flex justify-between text-[9px] text-amber-400/80">
+                <span>PRESET</span>
+                <span id="preset-band-hint">SUB 20–150Hz</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1 mt-1">
+                <button data-preset="bass" type="button" class="preset-btn hw-btn active py-1 rounded text-[9px] font-bold">BASS</button>
+                <button data-preset="vocal" type="button" class="preset-btn hw-btn py-1 rounded text-[9px] font-bold">VOCAL</button>
+                <button data-preset="quiet" type="button" class="preset-btn hw-btn py-1 rounded text-[9px] font-bold">QUIET</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4x Multiplied Slider System (4 Banks x 3 Sliders = 12 Sliders) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5 text-[10px]">
+            <!-- Bank 1 -->
+            <div class="p-2.5 rounded-lg bg-[#110e0b] border border-amber-500/25 space-y-2">
+              <div class="text-[10px] font-bold text-amber-300 border-b border-amber-500/20 pb-1">BANK 1 // SUB-SILENCE &amp; GAP PULL</div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>1A. SILENCE FLOOR</span><span id="val-s1-floor" class="text-amber-200">0.045</span></div>
+                <input id="s1-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.045" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>1B. GAP CONDENSE</span><span id="val-s1-condense" class="text-amber-200">0.75</span></div>
+                <input id="s1-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.75" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>1C. WAVE ROUND (SIN)</span><span id="val-s1-round" class="text-amber-200">0.65</span></div>
+                <input id="s1-round" type="range" min="0.0" max="1.0" step="0.02" value="0.65" class="hw-slider w-full" />
+              </div>
+            </div>
+
+            <!-- Bank 2 -->
+            <div class="p-2.5 rounded-lg bg-[#110e0b] border border-amber-500/25 space-y-2">
+              <div class="text-[10px] font-bold text-amber-300 border-b border-amber-500/20 pb-1">BANK 2 // MID-SEGMENT PAUSE ISOLATOR</div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>2A. SILENCE FLOOR</span><span id="val-s2-floor" class="text-amber-200">0.035</span></div>
+                <input id="s2-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.035" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>2B. GAP CONDENSE</span><span id="val-s2-condense" class="text-amber-200">0.70</span></div>
+                <input id="s2-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.70" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>2C. WAVE ROUND (COS)</span><span id="val-s2-round" class="text-amber-200">0.60</span></div>
+                <input id="s2-round" type="range" min="0.0" max="1.0" step="0.02" value="0.60" class="hw-slider w-full" />
+              </div>
+            </div>
+
+            <!-- Bank 3 -->
+            <div class="p-2.5 rounded-lg bg-[#110e0b] border border-amber-500/25 space-y-2">
+              <div class="text-[10px] font-bold text-amber-300 border-b border-amber-500/20 pb-1">BANK 3 // AIR TAIL &amp; DECAY CONDENSER</div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>3A. SILENCE FLOOR</span><span id="val-s3-floor" class="text-amber-200">0.025</span></div>
+                <input id="s3-floor" type="range" min="0.005" max="0.25" step="0.005" value="0.025" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>3B. GAP CONDENSE</span><span id="val-s3-condense" class="text-amber-200">0.65</span></div>
+                <input id="s3-condense" type="range" min="0.0" max="1.0" step="0.02" value="0.65" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>3C. WAVE ROUND (HARM)</span><span id="val-s3-round" class="text-amber-200">0.70</span></div>
+                <input id="s3-round" type="range" min="0.0" max="1.0" step="0.02" value="0.70" class="hw-slider w-full" />
+              </div>
+            </div>
+
+            <!-- Bank 4 -->
+            <div class="p-2.5 rounded-lg bg-[#110e0b] border border-amber-500/25 space-y-2">
+              <div class="text-[10px] font-bold text-amber-300 border-b border-amber-500/20 pb-1">BANK 4 // REAL-TIME DYNAMIC WAVE BUS</div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>4A. DYNAMIC DENSITY</span><span id="val-s4-floor" class="text-amber-200">0.60</span></div>
+                <input id="s4-floor" type="range" min="0.0" max="1.0" step="0.02" value="0.60" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>4B. WAVE FREQ (Hz)</span><span id="val-s4-condense" class="text-amber-200">6.50</span></div>
+                <input id="s4-condense" type="range" min="1.0" max="24.0" step="0.25" value="6.50" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>4C. SPLICE WAVE ROUND</span><span id="val-s4-round" class="text-amber-200">0.80</span></div>
+                <input id="s4-round" type="range" min="0.0" max="1.0" step="0.02" value="0.80" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- UNIT 05 // RV-7000 STEREO DELAY & ALGORITHMIC CONVOLUTION REVERB    -->
+    <!-- =================================================================== -->
+    <section class="rack-chassis rounded-lg overflow-hidden flex">
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span id="fx-led" class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 05 // RV-7000 STEREO PING-PONG DELAY &amp; SPACE REVERB</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-fx-bypass" type="button" class="hw-btn active px-2.5 py-0.5 rounded text-[10px] font-bold">FX BUS: ACTIVE</button>
+            <button type="button" data-collapse="unit-05-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <div id="unit-05-body" class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-[10px]">
+          <!-- Stereo Ping-Pong Delay -->
+          <div class="bg-[#110e0b] p-2.5 rounded-lg border border-amber-500/25 space-y-2">
+            <div class="flex justify-between items-center border-b border-amber-500/20 pb-1">
+              <span class="font-bold text-amber-300">STEREO PING-PONG DELAY</span>
+              <span class="text-amber-400/70">TEMPO / MS</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <div class="flex justify-between mb-0.5"><span>DELAY TIME</span><span id="fx-delay-time-val">0.32s</span></div>
+                <input id="fx-delay-time" type="range" min="0.06" max="0.90" step="0.01" value="0.32" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>FEEDBACK</span><span id="fx-delay-fb-val">38%</span></div>
+                <input id="fx-delay-fb" type="range" min="0" max="0.82" step="0.02" value="0.38" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>DELAY MIX</span><span id="fx-delay-mix-val">24%</span></div>
+                <input id="fx-delay-mix" type="range" min="0" max="0.85" step="0.02" value="0.24" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Algorithmic Convolution Reverb -->
+          <div class="bg-[#110e0b] p-2.5 rounded-lg border border-amber-500/25 space-y-2">
+            <div class="flex justify-between items-center border-b border-amber-500/20 pb-1">
+              <span class="font-bold text-amber-300">9D HALL CONVOLUTION REVERB</span>
+              <span class="text-amber-400/70">STEREO IR</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <div class="flex justify-between mb-0.5"><span>HALL SIZE</span><span id="fx-rev-size-val">2.4s</span></div>
+                <input id="fx-rev-size" type="range" min="0.6" max="5.0" step="0.2" value="2.4" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>HF DAMP</span><span id="fx-rev-damp-val">4.2kHz</span></div>
+                <input id="fx-rev-damp" type="range" min="800" max="12000" step="200" value="4200" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-0.5"><span>REVERB WET</span><span id="fx-rev-mix-val">28%</span></div>
+                <input id="fx-rev-mix" type="range" min="0" max="0.85" step="0.02" value="0.28" class="hw-slider w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- UNIT 06 // AIM-9D MANIFOLD VISUALIZER & TELEMETRY SCOPE (4U)        -->
+    <!-- =================================================================== -->
+    <section id="unit-06-section" class="rack-chassis rounded-lg overflow-hidden flex">
+      <div class="rack-ear w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+
+      <div class="flex-1 min-w-0 flex flex-col">
+        <!-- Unit 06 Header -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-black/40 border-b border-amber-500/25">
+          <div class="flex items-center gap-2">
+            <span id="telemetry-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="text-xs font-bold tracking-widest text-amber-200">UNIT 06 // AIM-9D AMBER MESH MANIFOLD &amp; WAVE GAP SCOPE</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-popout-viewport" type="button" class="hw-btn px-2.5 py-0.5 rounded text-[10px] font-bold text-sky-300 border-sky-400/50">
+              ⛶ POP-OUT FULLSCREEN
+            </button>
+            <button type="button" data-collapse="unit-06-body" class="collapse-unit-btn hw-btn px-2 py-0.5 rounded text-[10px] text-amber-300">[−]</button>
+          </div>
+        </div>
+
+        <!-- Unit 06 Body: 3D WebGL Canvas + Telemetry & Manifold Controls -->
+        <div id="unit-06-body" class="grid grid-cols-1 lg:grid-cols-12 min-h-[420px]">
+          <!-- Left / Main 3D WebGL Viewport -->
+          <div class="lg:col-span-8 relative bg-[#050402] min-h-[340px] sm:min-h-[420px] border-b lg:border-b-0 lg:border-r border-amber-500/25 overflow-hidden">
+            <div id="canvas-container" class="w-full h-full absolute inset-0"></div>
+
+            <!-- Floating Overlay Hint & Exit Fullscreen Button -->
+            <div class="absolute top-2.5 left-2.5 z-10 pointer-events-none flex flex-wrap gap-1.5">
+              <span class="px-2 py-0.5 rounded bg-black/70 border border-amber-500/30 text-[10px] text-amber-300/90">
+                DRAG TO ORBIT · TAP MESH TO SPAWN SOVEREIGN NODE
+              </span>
+            </div>
+
+            <button id="btn-exit-popout" type="button" class="hidden absolute top-3 right-3 z-20 hw-btn px-3 py-1.5 rounded text-xs font-bold text-amber-100 border-amber-400">
+              ✕ RETURN TO RACK
+            </button>
+          </div>
+
+          <!-- Right Manifold Control & Telemetry Column -->
+          <div class="lg:col-span-4 p-3 bg-[#110e0b] flex flex-col justify-between gap-2.5 text-[11px]">
+            <!-- Telemetry Readouts -->
+            <div class="lcd-screen p-2.5 rounded-lg space-y-1.5 text-[11px]">
+              <div class="flex justify-between border-b border-amber-500/15 pb-1">
+                <span class="text-amber-400/75">PRESET / PHASE:</span>
+                <span id="hud-preset" class="text-amber-200 font-bold">BASS CLUB</span>
+              </div>
+              <div class="flex justify-between border-b border-amber-500/15 pb-1">
+                <span class="text-amber-400/75">BLUE PHASE STATE:</span>
+                <span id="hud-blue-state" class="text-sky-400 font-bold">STANDBY (AMBER)</span>
+              </div>
+              <div class="flex justify-between border-b border-amber-500/15 pb-1">
+                <span class="text-amber-400/75">BASS / MID / TREB:</span>
+                <span id="hud-bands" class="text-amber-200">0% · 0% · 0%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-amber-400/75">BEATS / NODES:</span>
+                <span><strong id="hud-beats" class="text-amber-200">0</strong> · <strong id="hud-nodes" class="text-amber-200">0</strong></span>
+              </div>
+            </div>
+
+            <!-- Beat Energy Meter -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="text-amber-400/90 flex items-center gap-1.5">
+                  <span id="beat-flash-led" class="inline-block w-2 h-2 rounded-full bg-amber-500/30 transition-all duration-75"></span>
+                  BEAT ENERGY METER
+                </span>
+                <span id="hud-beat-thresh" class="text-amber-300/80">THR: 15.0%</span>
+              </div>
+              <div class="relative w-full h-3 rounded bg-black border border-amber-500/30 overflow-hidden">
+                <div id="beat-energy-bar" class="h-full w-0 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-100 transition-[width] duration-75"></div>
+                <div id="beat-threshold-marker" class="absolute top-0 bottom-0 w-0.5 bg-sky-300 shadow-[0_0_6px_#38bdf8]" style="left: 15%;"></div>
+              </div>
+            </div>
+
+            <!-- FFT + Wave Gap Scope -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-[10px] text-amber-400/85">
+                <span>FFT + WAVE GAP SCOPE</span>
+                <span>POST-DSP</span>
+              </div>
+              <div class="w-full h-14 rounded bg-black border border-amber-500/30 overflow-hidden">
+                <canvas id="fft-spectrum-canvas" class="w-full h-full block"></canvas>
+              </div>
+            </div>
+
+            <!-- Material Topology Mode -->
+            <div>
+              <div class="text-[10px] text-amber-400/80 mb-1">MATERIAL TOPOLOGY MODE</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button data-mode="0" type="button" class="mode-btn hw-btn active py-1.5 rounded text-[10px] font-bold">AMBER RESIN</button>
+                <button data-mode="1" type="button" class="mode-btn hw-btn py-1.5 rounded text-[10px] font-bold">WIREFRAME</button>
+                <button data-mode="2" type="button" class="mode-btn hw-btn py-1.5 rounded text-[10px] font-bold">9D PLASMA</button>
+              </div>
+            </div>
+
+            <!-- 9D Manifold Sliders -->
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+              <div>
+                <div class="flex justify-between"><span>9D TORSION</span><span id="val-depth">1.40</span></div>
+                <input id="slider-depth" type="range" min="0.1" max="3.5" step="0.05" value="1.40" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between"><span>TENSION (ω)</span><span id="val-tension">2.50</span></div>
+                <input id="slider-tension" type="range" min="0.5" max="8.0" step="0.1" value="2.50" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between"><span>PHASE SPEED</span><span id="val-speed">1.00</span></div>
+                <input id="slider-speed" type="range" min="0.0" max="4.0" step="0.1" value="1.00" class="hw-slider w-full" />
+              </div>
+              <div>
+                <div class="flex justify-between"><span>BEAT SENS</span><span id="val-beat-sens">1.40x</span></div>
+                <input id="slider-beat-sens" type="range" min="1.05" max="2.50" step="0.05" value="1.40" class="hw-slider w-full" />
+              </div>
+            </div>
+
+            <!-- Action Triggers -->
+            <div class="space-y-1.5 pt-1">
+              <button id="btn-auto-beat" type="button" class="hw-btn active w-full py-1.5 rounded text-[10px] font-bold tracking-wider">
+                ◎ AUTO BEAT SHOCKWAVES: ON
+              </button>
+              <button id="btn-blue-phase" type="button" class="hw-btn w-full py-2 rounded text-[11px] font-bold tracking-wider text-sky-300 border-sky-400/70">
+                ◈ <span id="btn-blue-label">BLUE PHASE // SOVEREIGN PULSE</span>
+              </button>
+              <button id="btn-pulse" type="button" class="hw-btn w-full py-1.5 rounded text-[10px] font-bold tracking-wider text-amber-200">
+                ⚡ ZERO-CROSSING PHASE SNAP (+1D)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rack-ear-right w-5 sm:w-7 flex flex-col justify-between items-center py-3 shrink-0">
+        <div class="rack-screw"></div>
+        <div class="rack-screw"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- REAR-PANEL PATCH BAY VIEW (SHOWN WHEN RACK IS FLIPPED 180°)           -->
+  <!-- ===================================================================== -->
+  <main id="rack-rear-view" class="hidden flex-1 w-full max-w-[1400px] mx-auto px-2 sm:px-4 py-4">
+    <div class="rack-chassis rounded-xl p-4 relative overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-amber-500/30">
+        <div>
+          <h2 class="text-sm font-bold tracking-widest text-sky-300">REAR PANEL // 1/4" TRS AUDIO &amp; CV/GATE MODULATION PATCH BAY</h2>
+          <p class="text-[11px] text-amber-300/75">Click any Output Jack then an Input Jack to re-patch audio/CV cables, or click a cable toggle below.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="toggle-cv-torsion" type="button" class="hw-btn active px-3 py-1 rounded text-[10px] font-bold text-sky-300">
+            CV: BEAT GATE → 9D TORSION [ON]
+          </button>
+          <button id="toggle-cv-filter" type="button" class="hw-btn active px-3 py-1 rounded text-[10px] font-bold text-amber-200">
+            CV: LFO WAVE → LPF CUTOFF [ON]
+          </button>
+          <button id="reset-patch-cables" type="button" class="hw-btn px-3 py-1 rounded text-[10px] font-bold">
+            RESET DEFAULT PATCH
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Rear Patch Bay Container with SVG Dangling Cords -->
+      <div id="patch-bay-stage" class="relative space-y-4 py-2">
+        <!-- SVG Overlay for Gravity-Drooping Virtual Patch Cables -->
+        <svg id="patch-cables-svg" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+
+        <!-- Rear Unit 01: Instruments & Input Sources -->
+        <div class="bg-[#120f0c] border border-amber-500/25 rounded-lg p-3 relative z-10">
+          <div class="text-[11px] font-bold text-amber-300 mb-2">REAR UNIT 01–03 // INSTRUMENT &amp; AUDIO SOURCE OUTPUTS</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px]">
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>432Hz DRONE OUT</span>
+              <div id="jack-drone-out" data-jack="drone-out" data-type="out" class="trs-jack" title="432Hz Drone Stereo Out"></div>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>SUBTRACTOR-9D OUT</span>
+              <div id="jack-sub-out" data-jack="sub-out" data-type="out" class="trs-jack" title="Subtractor-9D Audio Out"></div>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>REDRUM-X16 OUT</span>
+              <div id="jack-drum-out" data-jack="drum-out" data-type="out" class="trs-jack" title="Redrum-X16 Stereo Out"></div>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>MIC / MP3 DECK OUT</span>
+              <div id="jack-deck-out" data-jack="deck-out" data-type="out" class="trs-jack" title="Mic & MP3 Deck Out"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rear Unit 02: AIM-M1 Mixer Ins/Outs -->
+        <div class="bg-[#120f0c] border border-amber-500/25 rounded-lg p-3 relative z-10">
+          <div class="text-[11px] font-bold text-amber-300 mb-2">REAR UNIT 01 // AIM-M1 STUDIO MIXER CHANNEL INS &amp; MASTER SEND</div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[10px]">
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-mix-in1" data-jack="mix-in1" data-type="in" class="trs-jack"></div>
+              <span>CH 1 IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-mix-in2" data-jack="mix-in2" data-type="in" class="trs-jack"></div>
+              <span>CH 2 IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-mix-in3" data-jack="mix-in3" data-type="in" class="trs-jack"></div>
+              <span>CH 3 IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-mix-in4" data-jack="mix-in4" data-type="in" class="trs-jack"></div>
+              <span>CH 4 IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/60 p-2 rounded border border-amber-400/40">
+              <span>MIX BUS OUT</span>
+              <div id="jack-mix-out" data-jack="mix-out" data-type="out" class="trs-jack"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rear Unit 03: HC-4X Hyper-Compressor & RV-7000 FX Chain -->
+        <div class="bg-[#120f0c] border border-amber-500/25 rounded-lg p-3 relative z-10">
+          <div class="text-[11px] font-bold text-amber-300 mb-2">REAR UNIT 04–05 // HC-4X HYPER-COMPRESSOR &amp; RV-7000 FX ROUTING</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px]">
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-hc-in" data-jack="hc-in" data-type="in" class="trs-jack"></div>
+              <span>HC-4X DSP IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>HC-4X DSP OUT</span>
+              <div id="jack-hc-out" data-jack="hc-out" data-type="out" class="trs-jack"></div>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <div id="jack-fx-in" data-jack="fx-in" data-type="in" class="trs-jack"></div>
+              <span>RV-7000 FX IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-amber-500/20">
+              <span>RV-7000 OUT</span>
+              <div id="jack-fx-out" data-jack="fx-out" data-type="out" class="trs-jack"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rear Unit 04: 9D Manifold CV/Gate & Master Audio Out -->
+        <div class="bg-[#120f0c] border border-sky-500/35 rounded-lg p-3 relative z-10">
+          <div class="text-[11px] font-bold text-sky-300 mb-2">REAR UNIT 06 // AIM-9D MANIFOLD CV/GATE &amp; MASTER SPEAKERS</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px]">
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-sky-500/25">
+              <span>BEAT GATE CV OUT</span>
+              <div id="jack-cv-beat" data-jack="cv-beat" data-type="out" class="trs-jack cv-jack"></div>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-sky-500/25">
+              <div id="jack-cv-torsion" data-jack="cv-torsion" data-type="in" class="trs-jack cv-jack"></div>
+              <span>9D TORSION CV IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/50 p-2 rounded border border-sky-500/25">
+              <div id="jack-cv-cutoff" data-jack="cv-cutoff" data-type="in" class="trs-jack cv-jack"></div>
+              <span>LPF CUTOFF CV IN</span>
+            </div>
+            <div class="flex items-center justify-between bg-black/60 p-2 rounded border border-emerald-500/40">
+              <div id="jack-main-out" data-jack="main-out" data-type="in" class="trs-jack"></div>
+              <span class="text-emerald-300 font-bold">MAIN AUDIO OUT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- CUSTOM GLSL SHADERS FOR 9D AMBER MESH                                 -->
+  <!-- ===================================================================== -->
+  <script id="vertexShader" type="x-shader/x-vertex">
+    uniform float uTime;
+    uniform float uDepth;
+    uniform float uTension;
+    uniform float uBass;
+    uniform float uMid;
+    uniform float uTreble;
+    uniform float uGapCondense;
+    uniform float uWaveRound;
+    uniform float uPulseTime;
+    uniform float uBluePulseTime;
+    uniform float uBlueMix;
+
+    varying vec3 vNormal;
+    varying vec3 vWorldPos;
+    varying float vDisplacement;
+    varying float vBassZone;
+    varying float vMidZone;
+    varying float vTrebleZone;
+    varying vec2 vUv;
+
+    float harmonic9D(vec3 p, float t) {
+      float w1 = sin(p.x * uTension + t) * cos(p.y * uTension - t * 0.8);
+      float w2 = sin(p.z * uTension * 1.5 + t * 1.2) * cos(length(p.xy) * 2.0 - t);
+      float w3 = sin((p.x + p.y + p.z) * 3.0 - t * 1.7);
+      return (w1 * 0.5 + w2 * 0.35 + w3 * 0.15);
+    }
+
+    float roundWave(float x, float amount) {
+      float rounded = sin(x * 1.5707963);
+      return mix(x, rounded, clamp(amount, 0.0, 1.0));
+    }
+
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+
+      float bassZone = 1.0 - smoothstep(0.0, 0.95, abs(pos.y));
+      float midBandWave = 0.5 + 0.5 * sin(pos.x * 3.2 - pos.y * 4.2 + uTime * 1.8);
+      float midZone = midBandWave * (1.0 - 0.35 * bassZone);
+      float polarMask = smoothstep(0.35, 1.35, abs(pos.y));
+      float microRipple = sin(pos.x * 14.0 + uTime * 7.0) * cos(pos.z * 14.0 - uTime * 6.5);
+      float trebleZone = clamp(polarMask * 0.75 + 0.25, 0.0, 1.0);
+
+      vBassZone = bassZone * uBass;
+      vMidZone = midZone * uMid;
+      vTrebleZone = trebleZone * uTreble;
+
+      float rawWave = harmonic9D(pos, uTime);
+      float baseWave = roundWave(rawWave, uWaveRound * 0.75);
+
+      float gapPull = 1.0 - uGapCondense * 0.28;
+      float bassDisp = bassZone * uBass * (0.75 + 0.35 * sin(uTime * 3.0));
+      float midDisp = midZone * uMid * (0.65 * sin(pos.z * 4.0 + uTime * 2.5));
+      float trebleDisp = trebleZone * uTreble * (0.36 * roundWave(microRipple, uWaveRound));
+
+      float pulseAge = uTime - uPulseTime;
+      float shockwave = 0.0;
+      if (pulseAge >= 0.0 && pulseAge < 2.5) {
+        float radius = pulseAge * 4.5;
+        float dist = abs(length(pos) - radius);
+        shockwave = exp(-dist * 2.5) * sin(dist * 12.0) * (1.0 - pulseAge / 2.5) * 1.45;
+      }
+
+      float blueAge = uTime - uBluePulseTime;
+      float blueWave = 0.0;
+      if (blueAge >= 0.0 && blueAge < 2.8) {
+        float bRadius = blueAge * 5.2;
+        float bDist = abs(length(pos) - bRadius);
+        blueWave = exp(-bDist * 2.2) * cos(bDist * 14.0 - blueAge * 10.0) * (1.0 - blueAge / 2.8) * 1.25;
+      }
+
+      float blueHarmonicBoost = uBlueMix * 0.16 * sin(pos.y * 5.0 + uTime * 3.5);
+      float totalDisp = (baseWave * 0.35 * uDepth * gapPull) + bassDisp + midDisp + trebleDisp + shockwave + blueWave + blueHarmonicBoost;
+      vDisplacement = totalDisp;
+
+      vec3 displacedPos = pos + normal * totalDisp;
+      vec4 worldPosition = modelMatrix * vec4(displacedPos, 1.0);
+      vWorldPos = worldPosition.xyz;
+      vNormal = normalize(normalMatrix * normal);
+
+      gl_Position = projectionMatrix * viewMatrix * worldPosition;
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    uniform float uTime;
+    uniform int uMode;
+    uniform float uMid;
+    uniform float uTreble;
+    uniform float uWaveRound;
+    uniform float uBlueMix;
+
+    varying vec3 vNormal;
+    varying vec3 vWorldPos;
+    varying float vDisplacement;
+    varying float vBassZone;
+    varying float vMidZone;
+    varying float vTrebleZone;
+    varying vec2 vUv;
+
+    void main() {
+      vec3 viewDir = normalize(cameraPosition - vWorldPos);
+      float fresnel = pow(1.0 - abs(dot(viewDir, normalize(vNormal))), 2.6);
+
+      vec3 coreHoney     = vec3(0.98, 0.55, 0.05);
+      vec3 deepResin     = vec3(0.32, 0.09, 0.01);
+      vec3 sovereignGold = vec3(1.00, 0.88, 0.45);
+
+      vec3 electricBlue  = vec3(0.06, 0.62, 0.98);
+      vec3 deepCobalt    = vec3(0.02, 0.10, 0.32);
+      vec3 iceCyanRim    = vec3(0.55, 0.92, 1.00);
+      vec3 plasmaCyan    = vec3(0.15, 0.90, 0.95);
+
+      vec3 activeCore  = mix(coreHoney, electricBlue, uBlueMix);
+      vec3 activeDeep  = mix(deepResin, deepCobalt, uBlueMix);
+      vec3 activeRim   = mix(sovereignGold, iceCyanRim, uBlueMix);
+
+      if (uMode == 1) {
+        vec3 col = mix(activeCore, activeRim, fresnel + vTrebleZone * 0.4);
+        gl_FragColor = vec4(col, 0.88);
+        return;
+      }
+
+      if (uMode == 2) {
+        float shift = clamp(vMidZone * 1.5 + vDisplacement * 0.5 + uBlueMix * 0.35, 0.0, 1.0);
+        vec3 baseCol = mix(activeCore, plasmaCyan, shift);
+        vec3 glow = mix(activeDeep, baseCol, fresnel + 0.25);
+        gl_FragColor = vec4(glow + activeRim * pow(fresnel, 3.0), 0.92);
+        return;
+      }
+
+      float internalGlow = smoothstep(-0.6, 0.9, vDisplacement + vBassZone * 0.35);
+      vec3 resinColor = mix(activeDeep, activeCore, internalGlow);
+      resinColor += mix(sovereignGold, plasmaCyan, uBlueMix) * vMidZone * 0.35;
+      resinColor += activeRim * fresnel * (0.85 + vTrebleZone * 1.2 + uBlueMix * 0.35);
+
+      float rawLat = sin(vWorldPos.x * 6.0 + uTime) * cos(vWorldPos.y * 6.0 - uTime);
+      float roundedLat = mix(abs(rawLat), 0.5 + 0.5 * sin(rawLat * 3.14159), uWaveRound);
+      resinColor += activeCore * pow(roundedLat, 6.0) * (0.35 + vTrebleZone * 0.45);
+
+      float alpha = clamp(0.78 + fresnel * 0.22, 0.0, 1.0);
+      gl_FragColor = vec4(resinColor, alpha);
+    }
+  </script>
+
+  <!-- ===================================================================== -->
+  <!-- COMPLETE STUDIO RACK ENGINE, WEB AUDIO DSP & 3D WEBGL SCRIPT          -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // --- Non-blocking Toast Banner ---
+      let bannerTimeout = null;
+      function showBanner(msg) {
+        const banner = document.getElementById('status-banner');
+        const textEl = document.getElementById('status-banner-text');
+        if (!banner || !textEl) return;
+        textEl.textContent = msg;
+        banner.classList.remove('hidden');
+        clearTimeout(bannerTimeout);
+        bannerTimeout = setTimeout(() => banner.classList.add('hidden'), 2800);
+      }
+
+      // --- Collapsible Rack Units ---
+      document.querySelectorAll('.collapse-unit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.dataset.collapse;
+          const body = document.getElementById(targetId);
+          if (!body) return;
+          const isHidden = body.classList.toggle('hidden');
+          btn.textContent = isHidden ? '[+]' : '[−]';
+          if (!isHidden && targetId === 'unit-06-body') {
+            handleViewportResize();
+          }
+        });
+      });
+
+      // ===================================================================
+      // 1. WEB AUDIO STUDIO GRAPH: MIXER, SYNTH, DRUMS, HYPER-COMP, FX
+      // ===================================================================
+      let audioCtx = null;
+      let masterGainNode = null;
+      let masterLimiter = null;
+      let stereoSplitter = null;
+      let analyserL = null;
+      let analyserR = null;
+      let fftAnalyser = null;
+      let fftDataArray = null;
+      let timeDataL = null;
+      let timeDataR = null;
+
+      // Mixer 4-Channel Strips
+      const mixerChannels = [];
+      let mixBusGain = null;
+
+      // Hyper-Compressor DSP Node
+      let hyperProcessor = null;
+
+      // RV-7000 Delay & Reverb Nodes
+      let fxInputGain = null;
+      let fxDryGain = null;
+      let delayNodeL = null;
+      let delayNodeR = null;
+      let delayFeedbackL = null;
+      let delayFeedbackR = null;
+      let delayWetGain = null;
+      let convolverNode = null;
+      let reverbDampFilter = null;
+      let reverbWetGain = null;
+      let fxBypassed = false;
+
+      // Sources state
+      let isSynthPlaying = false;
+      let synthNodes = [];
+      let synthOutGain = null;
+
+      let isMicActive = false;
+      let micStream = null;
+      let micSource = null;
+
+      let uploadedAudioEl = null;
+      let uploadedSource = null;
+
+      // 12-Slider Hyper-Compressor Parameters
+      const hyperParams = {
+        enabled: true,
+        s1Floor: 0.045,
+        s1Condense: 0.75,
+        s1Round: 0.65,
+        s2Floor: 0.035,
+        s2Condense: 0.70,
+        s2Round: 0.60,
+        s3Floor: 0.025,
+        s3Condense: 0.65,
+        s3Round: 0.70,
+        s4Density: 0.60,
+        s4WaveHz: 6.50,
+        s4SpliceRound: 0.80
+      };
+
+      const dspTelemetry = {
+        isSilentGap: true,
+        gapCondensePct: 0,
+        waveRoundVal: 0,
+        sonicSegmentCount: 0,
+        envTrace: new Float32Array(64)
+      };
+      let envTraceIdx = 0;
+
+      function createImpulseResponse(ctx, durationSec, decayRate) {
+        const rate = ctx.sampleRate;
+        const length = Math.max(1, Math.floor(rate * durationSec));
+        const impulse = ctx.createBuffer(2, length, rate);
+        for (let ch = 0; ch < 2; ch++) {
+          const data = impulse.getChannelData(ch);
+          for (let i = 0; i < length; i++) {
+            const env = Math.pow(1 - i / length, decayRate);
+            data[i] = (Math.random() * 2 - 1) * env;
+          }
+        }
+        return impulse;
+      }
+
+      function createHyperCompressorNode(ctx) {
+        const bufferSize = 1024;
+        const proc = ctx.createScriptProcessor(bufferSize, 1, 1);
+
+        const ringCap = ctx.sampleRate * 2;
+        const ringBuf = new Float32Array(ringCap);
+        const lookaheadCushion = 512;
+        let writeIdx = 0;
+        let readIdx = 0;
+        let bufferedSamples = 0;
+
+        let rmsEnv = 0;
+        let wasActive = false;
+        let silenceRunSamples = 0;
+        let wavePhase = 0;
+        let spliceSmoothEnv = 1.0;
+        let prevOutSample = 0;
+
+        proc.onaudioprocess = (event) => {
+          const input = event.inputBuffer.getChannelData(0);
+          const output = event.outputBuffer.getChannelData(0);
+          const sr = ctx.sampleRate;
+
+          if (!hyperParams.enabled) {
+            output.set(input);
+            dspTelemetry.isSilentGap = false;
+            dspTelemetry.gapCondensePct = 0;
+            return;
+          }
+
+          const avgFloor = (hyperParams.s1Floor + hyperParams.s2Floor + hyperParams.s3Floor) / 3;
+          const avgCondense = (hyperParams.s1Condense + hyperParams.s2Condense + hyperParams.s3Condense) / 3;
+          const avgRound = (hyperParams.s1Round + hyperParams.s2Round + hyperParams.s3Round + hyperParams.s4SpliceRound) / 4;
+          const phaseInc = (Math.PI * 2 * hyperParams.s4WaveHz) / sr;
+
+          let lastSampleActive = false;
+          let activeSamplesInBlock = 0;
+
+          for (let i = 0; i < input.length; i++) {
+            const s = input[i];
+            const absS = Math.abs(s);
+
+            const envAlpha = absS > rmsEnv ? 0.015 : 0.0018;
+            rmsEnv = rmsEnv * (1 - envAlpha) + absS * envAlpha;
+
+            const threshold = wasActive ? avgFloor * 0.85 : avgFloor;
+            const isActiveSegment = rmsEnv >= threshold;
+            lastSampleActive = isActiveSegment;
+
+            if (isActiveSegment) {
+              activeSamplesInBlock += 1;
+              if (!wasActive) {
+                dspTelemetry.sonicSegmentCount += 1;
+              }
+              silenceRunSamples = 0;
+            } else {
+              silenceRunSamples += 1;
+            }
+            wasActive = isActiveSegment;
+
+            ringBuf[writeIdx] = s;
+            writeIdx = (writeIdx + 1) % ringCap;
+            bufferedSamples = Math.min(ringCap, bufferedSamples + 1);
+
+            let stepInt = 1;
+            if (!isActiveSegment && bufferedSamples > lookaheadCushion) {
+              const silenceSec = silenceRunSamples / sr;
+              if (silenceSec > 0.04) {
+                const ramp = Math.min(1.0, (silenceSec - 0.04) / 0.06);
+                const extraSkip = avgCondense * (1.0 + hyperParams.s4Density * 2.5) * ramp;
+                const maxAvail = Math.max(1, bufferedSamples - lookaheadCushion);
+                stepInt = Math.min(maxAvail, Math.max(1, Math.round(1 + extraSkip)));
+              }
+            }
+
+            let outSample = 0;
+            if (bufferedSamples > 0) {
+              const idx0 = Math.floor(readIdx) % ringCap;
+              const idx1 = (idx0 + 1) % ringCap;
+              const frac = readIdx - Math.floor(readIdx);
+              outSample = ringBuf[idx0] * (1 - frac) + ringBuf[idx1] * frac;
+
+              const actualStep = Math.min(bufferedSamples, stepInt);
+              readIdx = (readIdx + actualStep) % ringCap;
+              bufferedSamples -= actualStep;
+            }
+
+            wavePhase += phaseInc;
+            if (wavePhase > Math.PI * 2) wavePhase -= Math.PI * 2;
+
+            const targetGain = isActiveSegment ? 1.0 : (1.0 - avgCondense * 0.55);
+            const smoothAlpha = 0.002 + (1.0 - avgRound) * 0.025;
+            spliceSmoothEnv = spliceSmoothEnv * (1 - smoothAlpha) + targetGain * smoothAlpha;
+
+            const waveMod = Math.sin(wavePhase) * 0.08 * hyperParams.s4Density * avgRound;
+            const roundedEnvelope = Math.max(0.05, spliceSmoothEnv + waveMod);
+
+            const dynComp = 1.0 / (1.0 + hyperParams.s4Density * 0.25 * Math.max(0, Math.abs(outSample) - 0.7));
+            let processed = outSample * roundedEnvelope * dynComp;
+
+            if (stepInt > 1) {
+              processed = prevOutSample * 0.25 + processed * 0.75;
+            }
+            prevOutSample = processed;
+
+            output[i] = Math.max(-1.0, Math.min(1.0, processed));
+          }
+
+          dspTelemetry.isSilentGap = activeSamplesInBlock === 0 && !lastSampleActive;
+          dspTelemetry.gapCondensePct = Math.round(
+            Math.min(100, (silenceRunSamples > 0 ? avgCondense * (1.0 + hyperParams.s4Density * 0.6) * 65 : avgCondense * 35))
+          );
+          dspTelemetry.waveRoundVal = Math.sin(wavePhase) * avgRound;
+          dspTelemetry.envTrace[envTraceIdx] = Math.min(1.0, rmsEnv * 3.5);
+          envTraceIdx = (envTraceIdx + 1) % dspTelemetry.envTrace.length;
+        };
+
+        return proc;
+      }
+
+      function initStudioAudio() {
+        try {
+          if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+
+            // Master Bus & Limiter
+            mixBusGain = audioCtx.createGain();
+            mixBusGain.gain.value = 1.0;
+
+            // 4 Mixer Channels -> mixBusGain
+            for (let i = 0; i < 4; i++) {
+              const input = audioCtx.createGain();
+              const lowShelf = audioCtx.createBiquadFilter();
+              lowShelf.type = 'lowshelf';
+              lowShelf.frequency.value = 180;
+
+              const highShelf = audioCtx.createBiquadFilter();
+              highShelf.type = 'highshelf';
+              highShelf.frequency.value = 3200;
+
+              const panner = audioCtx.createStereoPanner();
+              const fader = audioCtx.createGain();
+
+              input.connect(lowShelf);
+              lowShelf.connect(highShelf);
+              highShelf.connect(panner);
+              panner.connect(fader);
+              fader.connect(mixBusGain);
+
+              mixerChannels.push({
+                input,
+                lowShelf,
+                highShelf,
+                panner,
+                fader,
+                vol: [0.75, 0.80, 0.90, 0.95][i],
+                muted: false,
+                solo: false
+              });
+            }
+
+            // Apply initial channel settings
+            mixerChannels[1].lowShelf.gain.value = 2;
+            mixerChannels[1].highShelf.gain.value = 1;
+            mixerChannels[2].lowShelf.gain.value = 3;
+            mixerChannels[2].highShelf.gain.value = 2;
+            updateMixerGainStates();
+
+            // HC-4X Silence-Gap Hyper-Compressor
+            hyperProcessor = createHyperCompressorNode(audioCtx);
+            mixBusGain.connect(hyperProcessor);
+
+            // RV-7000 Stereo Ping-Pong Delay & Convolution Reverb
+            fxInputGain = audioCtx.createGain();
+            fxDryGain = audioCtx.createGain();
+            fxDryGain.gain.value = 1.0;
+
+            // Ping-Pong Delay
+            delayNodeL = audioCtx.createDelay(2.0);
+            delayNodeR = audioCtx.createDelay(2.0);
+            delayNodeL.delayTime.value = 0.32;
+            delayNodeR.delayTime.value = 0.48;
+
+            delayFeedbackL = audioCtx.createGain();
+            delayFeedbackR = audioCtx.createGain();
+            delayFeedbackL.gain.value = 0.38;
+            delayFeedbackR.gain.value = 0.38;
+
+            const delayMerger = audioCtx.createChannelMerger(2);
+            delayWetGain = audioCtx.createGain();
+            delayWetGain.gain.value = 0.24;
+
+            fxInputGain.connect(delayNodeL);
+            delayNodeL.connect(delayFeedbackL);
+            delayFeedbackL.connect(delayNodeR);
+            delayNodeR.connect(delayFeedbackR);
+            delayFeedbackR.connect(delayNodeL);
+            delayNodeL.connect(delayMerger, 0, 0);
+            delayNodeR.connect(delayMerger, 0, 1);
+            delayMerger.connect(delayWetGain);
+
+            // Algorithmic Convolution Reverb
+            convolverNode = audioCtx.createConvolver();
+            convolverNode.buffer = createImpulseResponse(audioCtx, 2.4, 2.8);
+            reverbDampFilter = audioCtx.createBiquadFilter();
+            reverbDampFilter.type = 'lowpass';
+            reverbDampFilter.frequency.value = 4200;
+            reverbWetGain = audioCtx.createGain();
+            reverbWetGain.gain.value = 0.28;
+
+            fxInputGain.connect(convolverNode);
+            convolverNode.connect(reverbDampFilter);
+            reverbDampFilter.connect(reverbWetGain);
+
+            // Master Limiter & Output Analysers
+            masterLimiter = audioCtx.createDynamicsCompressor();
+            masterLimiter.threshold.value = -1.5;
+            masterLimiter.knee.value = 6;
+            masterLimiter.ratio.value = 12;
+            masterLimiter.attack.value = 0.003;
+            masterLimiter.release.value = 0.12;
+
+            masterGainNode = audioCtx.createGain();
+            masterGainNode.gain.value = 0.85;
+
+            fftAnalyser = audioCtx.createAnalyser();
+            fftAnalyser.fftSize = 256;
+            fftAnalyser.smoothingTimeConstant = 0.72;
+            fftDataArray = new Uint8Array(fftAnalyser.frequencyBinCount);
+
+            stereoSplitter = audioCtx.createChannelSplitter(2);
+            analyserL = audioCtx.createAnalyser();
+            analyserR = audioCtx.createAnalyser();
+            analyserL.fftSize = 256;
+            analyserR.fftSize = 256;
+            timeDataL = new Uint8Array(analyserL.frequencyBinCount);
+            timeDataR = new Uint8Array(analyserR.frequencyBinCount);
+
+            // Connect DSP Chain: HyperProcessor -> FX -> Limiter -> Master -> Speakers
+            hyperProcessor.connect(fxInputGain);
+            fxInputGain.connect(fxDryGain);
+
+            fxDryGain.connect(masterLimiter);
+            delayWetGain.connect(masterLimiter);
+            reverbWetGain.connect(masterLimiter);
+
+            masterLimiter.connect(masterGainNode);
+            masterGainNode.connect(fftAnalyser);
+            masterGainNode.connect(stereoSplitter);
+            stereoSplitter.connect(analyserL, 0);
+            stereoSplitter.connect(analyserR, 1);
+            masterGainNode.connect(audioCtx.destination);
+
+            document.getElementById('engine-led').className = 'w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]';
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return true;
+        } catch (err) {
+          showBanner('Web Audio API initialization failed in this context.');
+          return false;
+        }
+      }
+
+      function updateMixerGainStates() {
+        if (mixerChannels.length === 0) return;
+        const anySolo = mixerChannels.some((ch) => ch.solo);
+        mixerChannels.forEach((ch) => {
+          const active = anySolo ? ch.solo : !ch.muted;
+          ch.fader.gain.value = active ? ch.vol : 0;
+        });
+      }
+
+      // Bind Mixer 4-Channel Controls
+      for (let i = 0; i < 4; i++) {
+        const chNum = i + 1;
+        const volSlider = document.getElementById(`ch${chNum}-vol`);
+        const volLabel = document.getElementById(`ch${chNum}-vol-val`);
+        const lowSlider = document.getElementById(`ch${chNum}-low`);
+        const lowLabel = document.getElementById(`ch${chNum}-low-val`);
+        const highSlider = document.getElementById(`ch${chNum}-high`);
+        const highLabel = document.getElementById(`ch${chNum}-high-val`);
+        const panSlider = document.getElementById(`ch${chNum}-pan`);
+        const panLabel = document.getElementById(`ch${chNum}-pan-val`);
+        const muteBtn = document.getElementById(`ch${chNum}-mute`);
+        const soloBtn = document.getElementById(`ch${chNum}-solo`);
+
+        volSlider.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          volLabel.textContent = Math.round(v * 100) + '%';
+          if (mixerChannels[i]) {
+            mixerChannels[i].vol = v;
+            updateMixerGainStates();
+          }
+        });
+
+        lowSlider.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          lowLabel.textContent = (v > 0 ? '+' : '') + v + 'dB';
+          if (mixerChannels[i]) mixerChannels[i].lowShelf.gain.value = v;
+        });
+
+        highSlider.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          highLabel.textContent = (v > 0 ? '+' : '') + v + 'dB';
+          if (mixerChannels[i]) mixerChannels[i].highShelf.gain.value = v;
+        });
+
+        panSlider.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          panLabel.textContent = v === 0 ? 'C' : (v < 0 ? 'L' + Math.abs(Math.round(v * 100)) : 'R' + Math.round(v * 100));
+          if (mixerChannels[i]) mixerChannels[i].panner.pan.value = v;
+        });
+
+        muteBtn.addEventListener('click', () => {
+          if (!initStudioAudio()) return;
+          mixerChannels[i].muted = !mixerChannels[i].muted;
+          muteBtn.classList.toggle('active', mixerChannels[i].muted);
+          updateMixerGainStates();
+        });
+
+        soloBtn.addEventListener('click', () => {
+          if (!initStudioAudio()) return;
+          mixerChannels[i].solo = !mixerChannels[i].solo;
+          soloBtn.classList.toggle('blue-active', mixerChannels[i].solo);
+          updateMixerGainStates();
+        });
+      }
+
+      // Master Volume & Bus Drive Sync
+      const topMasterVol = document.getElementById('master-vol');
+      const topMasterVal = document.getElementById('master-vol-val');
+      const mixerMasterVol = document.getElementById('mixer-mst-vol');
+      const mixerMasterVal = document.getElementById('mixer-mst-val');
+
+      function setMasterVolume(val) {
+        topMasterVol.value = val;
+        mixerMasterVol.value = val;
+        const pct = Math.round(val * 100) + '%';
+        topMasterVal.textContent = pct;
+        mixerMasterVal.textContent = pct;
+        if (masterGainNode) masterGainNode.gain.value = val;
+      }
+      topMasterVol.addEventListener('input', (e) => setMasterVolume(parseFloat(e.target.value)));
+      mixerMasterVol.addEventListener('input', (e) => setMasterVolume(parseFloat(e.target.value)));
+
+      document.getElementById('bus-drive').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('bus-drive-val').textContent = v.toFixed(2) + 'x';
+        if (mixBusGain) mixBusGain.gain.value = v;
+      });
+
+      // --- 432Hz Drone Synth (Mixer Ch 1) ---
+      const btnSynth = document.getElementById('btn-synth');
+      const hudSourceEl = document.getElementById('hud-source');
+
+      function updateSourceHud() {
+        const active = [];
+        if (isTransportPlaying) active.push('SEQ');
+        if (isSynthPlaying) active.push('432Hz');
+        if (isMicActive) active.push('MIC');
+        if (uploadedAudioEl && !uploadedAudioEl.paused) active.push('MP3');
+        hudSourceEl.textContent = active.length > 0 ? 'BUS: ' + active.join(' + ') : 'BUS: STANDBY';
+      }
+
+      function stopDroneSynth() {
+        synthNodes.forEach((n) => {
+          try { n.stop(); n.disconnect(); } catch (_) {}
+        });
+        synthNodes = [];
+        if (synthOutGain) {
+          try { synthOutGain.disconnect(); } catch (_) {}
+          synthOutGain = null;
+        }
+        isSynthPlaying = false;
+        btnSynth.textContent = '▶ ENGAGE 432Hz DRONE';
+        btnSynth.classList.remove('active');
+      }
+
+      btnSynth.addEventListener('click', () => {
+        if (!initStudioAudio()) return;
+        if (isSynthPlaying) {
+          stopDroneSynth();
+          updateSourceHud();
+          showBanner('432Hz Sovereign Drone stopped.');
+          return;
+        }
+        const freqs = [54, 108, 216, 432];
+        synthOutGain = audioCtx.createGain();
+        synthOutGain.gain.value = 0.22;
+        synthOutGain.connect(mixerChannels[0].input);
+
+        freqs.forEach((f, idx) => {
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = idx === 0 ? 'sine' : 'triangle';
+          osc.frequency.value = isBluePhaseActive ? f * 1.015 : f;
+          g.gain.value = 1 / (idx + 1);
+          osc.connect(g);
+          g.connect(synthOutGain);
+          osc.start();
+          synthNodes.push(osc);
+        });
+
+        isSynthPlaying = true;
+        btnSynth.textContent = '■ STOP 432Hz DRONE';
+        btnSynth.classList.add('active');
+        updateSourceHud();
+        showBanner('432Hz Drone routed into Mixer Ch 1 → Hyper-Compressor.');
+      });
+
+      // --- Live Mic & MP3 Deck (Mixer Ch 4) ---
+      const btnMic = document.getElementById('btn-mic');
+      btnMic.addEventListener('click', async () => {
+        if (isMicActive) {
+          if (micSource) { try { micSource.disconnect(); } catch (_) {} micSource = null; }
+          if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
+          isMicActive = false;
+          btnMic.textContent = '🎙 LIVE MIC';
+          btnMic.classList.remove('blue-active');
+          updateSourceHud();
+          showBanner('Live Microphone muted.');
+          return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showBanner('Microphone API unavailable in this browser.');
+          return;
+        }
+        if (!initStudioAudio()) return;
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+          micSource = audioCtx.createMediaStreamSource(micStream);
+          micSource.connect(mixerChannels[3].input);
+          isMicActive = true;
+          btnMic.textContent = '● MIC LIVE';
+          btnMic.classList.add('blue-active');
+          updateSourceHud();
+          showBanner('Live Mic routed to Mixer Ch 4.');
+        } catch (err) {
+          showBanner('Microphone access denied or unavailable.');
+        }
+      });
+
+      document.getElementById('input-audio').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !initStudioAudio()) return;
+        try {
+          if (uploadedAudioEl) {
+            uploadedAudioEl.pause();
+            if (uploadedAudioEl.src) URL.revokeObjectURL(uploadedAudioEl.src);
+          }
+          if (uploadedSource) {
+            try { uploadedSource.disconnect(); } catch (_) {}
+            uploadedSource = null;
+          }
+          const url = URL.createObjectURL(file);
+          uploadedAudioEl = new Audio(url);
+          uploadedAudioEl.crossOrigin = 'anonymous';
+          uploadedSource = audioCtx.createMediaElementSource(uploadedAudioEl);
+          uploadedSource.connect(mixerChannels[3].input);
+
+          uploadedAudioEl.addEventListener('play', updateSourceHud);
+          uploadedAudioEl.addEventListener('pause', updateSourceHud);
+          uploadedAudioEl.addEventListener('ended', updateSourceHud);
+
+          uploadedAudioEl.play().then(() => {
+            updateSourceHud();
+            showBanner(`Loaded "${file.name}" into Mixer Ch 4.`);
+          }).catch(() => showBanner('Tap again to start audio playback.'));
+        } catch (err) {
+          showBanner('Unable to load audio file.');
+        }
+      });
+
+      // ===================================================================
+      // 2. UNIT 02: SUBTRACTOR-9D SYNTHESIZER & 16-STEP SEQUENCER
+      // ===================================================================
+      const SCALES = {
+        minor:      { label: 'A Minor', notes: ['A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'C3', 'E3'], freqs: [54, 64.2, 72.1, 80.9, 96.2, 108, 128.4, 161.8] },
+        phrygian:   { label: 'A Phrygian', notes: ['A1', 'Bb1', 'D2', 'E2', 'F2', 'A2', 'Bb2', 'E3'], freqs: [54, 57.2, 72.1, 80.9, 85.7, 108, 114.4, 161.8] },
+        pentatonic: { label: 'A Pentatonic', notes: ['A1', 'C2', 'D2', 'E2', 'G2', 'A2', 'C3', 'D3'], freqs: [54, 64.2, 72.1, 80.9, 96.2, 108, 128.4, 144.2] }
+      };
+
+      // Default hypnotic 16-step bass/lead sequence
+      const subSteps = [
+        { active: true,  noteIdx: 0 },
+        { active: false, noteIdx: 0 },
+        { active: true,  noteIdx: 5 },
+        { active: false, noteIdx: 2 },
+        { active: true,  noteIdx: 0 },
+        { active: true,  noteIdx: 3 },
+        { active: false, noteIdx: 4 },
+        { active: true,  noteIdx: 2 },
+        { active: true,  noteIdx: 0 },
+        { active: false, noteIdx: 0 },
+        { active: true,  noteIdx: 6 },
+        { active: false, noteIdx: 5 },
+        { active: true,  noteIdx: 3 },
+        { active: true,  noteIdx: 2 },
+        { active: true,  noteIdx: 4 },
+        { active: false, noteIdx: 1 }
+      ];
+
+      let cvLfoToCutoff = true;
+      let cvBeatToTorsion = true;
+
+      function triggerSubtractorVoice(noteIdx, durationSec = 0.24) {
+        if (!initStudioAudio()) return;
+        const scaleKey = document.getElementById('sub-scale').value;
+        const scale = SCALES[scaleKey] || SCALES.minor;
+        const freq = scale.freqs[noteIdx % scale.freqs.length];
+
+        const osc1Wave = document.getElementById('sub-osc1-wave').value;
+        const osc2Wave = document.getElementById('sub-osc2-wave').value;
+        const detune = parseFloat(document.getElementById('sub-detune').value);
+        let cutoff = parseFloat(document.getElementById('sub-cutoff').value);
+        const reso = parseFloat(document.getElementById('sub-reso').value);
+        const decay = parseFloat(document.getElementById('sub-decay').value);
+
+        // Apply Rear-Panel LFO CV modulation to Filter Cutoff if patched
+        if (cvLfoToCutoff) {
+          const lfoMod = 1.0 + 0.35 * Math.sin(performance.now() * 0.004);
+          cutoff = Math.max(120, Math.min(7500, cutoff * lfoMod));
+        }
+
+        const now = audioCtx.currentTime;
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        osc1.type = osc1Wave;
+        osc2.type = osc2Wave;
+        osc1.frequency.setValueAtTime(freq, now);
+        osc2.frequency.setValueAtTime(freq * 0.5, now); // Sub octave
+        osc1.detune.setValueAtTime(detune, now);
+        osc2.detune.setValueAtTime(-detune, now);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.Q.setValueAtTime(reso, now);
+        filter.frequency.setValueAtTime(Math.min(9000, cutoff * 2.2), now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(90, cutoff * 0.45), now + decay);
+
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(0.001, now);
+        env.gain.linearRampToValueAtTime(0.28, now + 0.012);
+        env.gain.exponentialRampToValueAtTime(0.0008, now + decay + 0.05);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(env);
+        env.connect(mixerChannels[1].input);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + decay + 0.08);
+        osc2.stop(now + decay + 0.08);
+      }
+
+      // Build Subtractor 16-Step Grid UI
+      const subSeqGrid = document.getElementById('sub-seq-grid');
+      function renderSubSeqGrid() {
+        const scaleKey = document.getElementById('sub-scale').value;
+        const scale = SCALES[scaleKey] || SCALES.minor;
+        subSeqGrid.innerHTML = '';
+
+        subSteps.forEach((step, idx) => {
+          const cell = document.createElement('div');
+          cell.className = 'flex flex-col items-center gap-1';
+
+          const pad = document.createElement('button');
+          pad.type = 'button';
+          pad.dataset.subStep = idx;
+          pad.className = `step-pad w-full h-9 rounded flex flex-col items-center justify-center text-[9px] font-bold cursor-pointer ${idx % 4 === 0 ? 'beat-group' : ''} ${step.active ? 'on text-black' : 'text-amber-300/70'}`;
+          pad.innerHTML = `<span>${idx + 1}</span>`;
+          pad.addEventListener('click', () => {
+            step.active = !step.active;
+            if (step.active) triggerSubtractorVoice(step.noteIdx);
+            renderSubSeqGrid();
+          });
+
+          const noteBtn = document.createElement('button');
+          noteBtn.type = 'button';
+          noteBtn.className = 'w-full py-0.5 rounded bg-black/70 border border-amber-500/25 text-[9px] text-amber-200 hover:border-amber-400 cursor-pointer';
+          noteBtn.textContent = scale.notes[step.noteIdx];
+          noteBtn.title = 'Click to change step pitch';
+          noteBtn.addEventListener('click', () => {
+            step.noteIdx = (step.noteIdx + 1) % scale.notes.length;
+            if (step.active) triggerSubtractorVoice(step.noteIdx);
+            renderSubSeqGrid();
+          });
+
+          cell.appendChild(pad);
+          cell.appendChild(noteBtn);
+          subSeqGrid.appendChild(cell);
+        });
+      }
+      renderSubSeqGrid();
+
+      document.getElementById('sub-scale').addEventListener('change', renderSubSeqGrid);
+      document.getElementById('sub-detune').addEventListener('input', (e) => {
+        document.getElementById('sub-detune-val').textContent = e.target.value + ' ct';
+      });
+      document.getElementById('sub-cutoff').addEventListener('input', (e) => {
+        document.getElementById('sub-cutoff-val').textContent = e.target.value + ' Hz';
+      });
+      document.getElementById('sub-reso').addEventListener('input', (e) => {
+        document.getElementById('sub-reso-val').textContent = parseFloat(e.target.value).toFixed(1);
+      });
+      document.getElementById('sub-decay').addEventListener('input', (e) => {
+        document.getElementById('sub-decay-val').textContent = parseFloat(e.target.value).toFixed(2) + 's';
+      });
+      document.getElementById('sub-trigger-btn').addEventListener('click', () => triggerSubtractorVoice(0));
+      document.getElementById('sub-clear-btn').addEventListener('click', () => {
+        subSteps.forEach((s) => (s.active = false));
+        renderSubSeqGrid();
+      });
+
+      // ===================================================================
+      // 3. UNIT 03: REDRUM-X16 ANALOG DRUM COMPUTER
+      // ===================================================================
+      const DRUM_CHANNELS = [
+        { id: 'kick',  name: '01 KICK',   vol: 0.95, pitch: 52,  decay: 0.36 },
+        { id: 'snare', name: '02 SNARE',  vol: 0.78, pitch: 185, decay: 0.20 },
+        { id: 'chat',  name: '03 CL HAT', vol: 0.55, pitch: 8500, decay: 0.06 },
+        { id: 'ohat',  name: '04 OP HAT', vol: 0.52, pitch: 7200, decay: 0.28 },
+        { id: 'clap',  name: '05 CLAP',   vol: 0.68, pitch: 1200, decay: 0.22 },
+        { id: 'perc',  name: '06 9D PERC',vol: 0.62, pitch: 432, decay: 0.16 }
+      ];
+
+      const DRUM_PATTERNS = {
+        house: [
+          [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0], // Kick
+          [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0], // Snare
+          [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0], // Closed Hat
+          [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,1], // Open Hat
+          [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1], // Clap
+          [0,1,0,0, 0,0,1,0, 0,1,0,0, 0,0,1,0]  // 9D Perc
+        ],
+        techno: [
+          [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,1],
+          [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0],
+          [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+          [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+          [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,1,0,0]
+        ],
+        boombap: [
+          [1,0,0,0, 0,0,1,1, 0,0,1,0, 0,0,0,0],
+          [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1],
+          [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
+          [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          [0,0,0,1, 0,0,0,0, 0,1,0,0, 0,0,0,0]
+        ]
+      };
+
+      let drumGrid = DRUM_PATTERNS.house.map((row) => [...row]);
+      let noiseBuffer = null;
+
+      function getNoiseBuffer(ctx) {
+        if (noiseBuffer) return noiseBuffer;
+        const len = ctx.sampleRate * 1.0;
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        noiseBuffer = buf;
+        return buf;
+      }
+
+      function triggerDrumVoice(chIdx) {
+        if (!initStudioAudio()) return;
+        const ch = DRUM_CHANNELS[chIdx];
+        const now = audioCtx.currentTime;
+        const dest = mixerChannels[2].input;
+
+        if (ch.id === 'kick') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(ch.pitch * 2.6, now);
+          osc.frequency.exponentialRampToValueAtTime(ch.pitch * 0.72, now + 0.08);
+          osc.frequency.exponentialRampToValueAtTime(32, now + ch.decay);
+
+          gain.gain.setValueAtTime(ch.vol * 0.9, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + ch.decay);
+
+          osc.connect(gain);
+          gain.connect(dest);
+          osc.start(now);
+          osc.stop(now + ch.decay + 0.02);
+        } else if (ch.id === 'snare') {
+          // Noise burst + body tone
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = getNoiseBuffer(audioCtx);
+          const hp = audioCtx.createBiquadFilter();
+          hp.type = 'highpass';
+          hp.frequency.value = 900;
+          const nGain = audioCtx.createGain();
+          nGain.gain.setValueAtTime(ch.vol * 0.55, now);
+          nGain.gain.exponentialRampToValueAtTime(0.001, now + ch.decay);
+          noise.connect(hp);
+          hp.connect(nGain);
+          nGain.connect(dest);
+          noise.start(now);
+          noise.stop(now + ch.decay + 0.02);
+
+          const osc = audioCtx.createOscillator();
+          const oGain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(ch.pitch, now);
+          osc.frequency.exponentialRampToValueAtTime(95, now + 0.1);
+          oGain.gain.setValueAtTime(ch.vol * 0.45, now);
+          oGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(oGain);
+          oGain.connect(dest);
+          osc.start(now);
+          osc.stop(now + 0.14);
+        } else if (ch.id === 'chat' || ch.id === 'ohat') {
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = getNoiseBuffer(audioCtx);
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = 'highpass';
+          bp.frequency.value = ch.pitch;
+          const gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(ch.vol * 0.42, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + ch.decay);
+          noise.connect(bp);
+          bp.connect(gain);
+          gain.connect(dest);
+          noise.start(now);
+          noise.stop(now + ch.decay + 0.02);
+        } else if (ch.id === 'clap') {
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = getNoiseBuffer(audioCtx);
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.value = ch.pitch;
+          bp.Q.value = 1.6;
+          const gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(ch.vol * 0.65, now + 0.01);
+          gain.gain.linearRampToValueAtTime(ch.vol * 0.25, now + 0.025);
+          gain.gain.linearRampToValueAtTime(ch.vol * 0.6, now + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + ch.decay);
+          noise.connect(bp);
+          bp.connect(gain);
+          gain.connect(dest);
+          noise.start(now);
+          noise.stop(now + ch.decay + 0.02);
+        } else {
+          // 9D Metallic FM Perc
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(ch.pitch, now);
+          osc.frequency.exponentialRampToValueAtTime(ch.pitch * 0.5, now + ch.decay);
+          gain.gain.setValueAtTime(ch.vol * 0.5, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + ch.decay);
+          osc.connect(gain);
+          gain.connect(dest);
+          osc.start(now);
+          osc.stop(now + ch.decay + 0.02);
+        }
+      }
+
+      const redrumMatrix = document.getElementById('redrum-matrix');
+      function renderRedrumMatrix() {
+        redrumMatrix.innerHTML = '';
+        DRUM_CHANNELS.forEach((ch, rowIdx) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2 bg-[#110e0b] px-2 py-1.5 rounded border border-amber-500/20';
+
+          const trigBtn = document.createElement('button');
+          trigBtn.type = 'button';
+          trigBtn.className = 'hw-btn w-24 py-1 px-1.5 rounded text-[10px] font-bold text-left text-amber-200 shrink-0 cursor-pointer';
+          trigBtn.textContent = ch.name;
+          trigBtn.addEventListener('click', () => triggerDrumVoice(rowIdx));
+          row.appendChild(trigBtn);
+
+          const volWrap = document.createElement('div');
+          volWrap.className = 'w-20 flex items-center gap-1 shrink-0';
+          const volInput = document.createElement('input');
+          volInput.type = 'range';
+          volInput.min = '0';
+          volInput.max = '1.2';
+          volInput.step = '0.02';
+          volInput.value = ch.vol;
+          volInput.className = 'hw-slider w-full';
+          volInput.title = `${ch.name} Level`;
+          volInput.addEventListener('input', (e) => {
+            ch.vol = parseFloat(e.target.value);
+          });
+          volWrap.appendChild(volInput);
+          row.appendChild(volWrap);
+
+          const stepsWrap = document.createElement('div');
+          stepsWrap.className = 'flex-1 grid grid-cols-16 gap-1';
+          for (let s = 0; s < 16; s++) {
+            const isOn = drumGrid[rowIdx][s] === 1;
+            const pad = document.createElement('button');
+            pad.type = 'button';
+            pad.dataset.drumStep = s;
+            pad.className = `step-pad h-6 rounded text-[9px] font-bold cursor-pointer ${s % 4 === 0 ? 'beat-group' : ''} ${isOn ? 'on text-black' : 'text-amber-500/40'}`;
+            pad.textContent = (s % 4 === 0) ? (s / 4 + 1) : '·';
+            pad.addEventListener('click', () => {
+              drumGrid[rowIdx][s] = isOn ? 0 : 1;
+              if (!isOn) triggerDrumVoice(rowIdx);
+              renderRedrumMatrix();
+            });
+            stepsWrap.appendChild(pad);
+          }
+          row.appendChild(stepsWrap);
+          redrumMatrix.appendChild(row);
+        });
+      }
+      renderRedrumMatrix();
+
+      document.querySelectorAll('.drum-preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.drumPreset;
+          if (!DRUM_PATTERNS[key]) return;
+          drumGrid = DRUM_PATTERNS[key].map((r) => [...r]);
+          document.querySelectorAll('.drum-preset-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderRedrumMatrix();
+          showBanner(`Redrum-X16 pattern loaded: ${btn.textContent}`);
+        });
+      });
+
+      document.getElementById('drum-clear-btn').addEventListener('click', () => {
+        drumGrid = DRUM_CHANNELS.map(() => new Array(16).fill(0));
+        renderRedrumMatrix();
+      });
+
+      // ===================================================================
+      // 4. MASTER TRANSPORT & 16-STEP SEQUENCER CLOCK
+      // ===================================================================
+      let isTransportPlaying = false;
+      let currentStep = 0;
+      let barCount = 1;
+      let stepTimerId = null;
+
+      function getStepIntervalMs() {
+        const bpm = Math.max(60, Math.min(180, parseInt(document.getElementById('transport-bpm').value, 10) || 124));
+        return (60 / bpm / 4) * 1000;
+      }
+
+      function highlightPlayingStep(stepIdx) {
+        document.querySelectorAll('.step-pad.playing').forEach((el) => el.classList.remove('playing'));
+        document.querySelectorAll(`[data-sub-step="${stepIdx}"], [data-drum-step="${stepIdx}"]`).forEach((el) => {
+          el.classList.add('playing');
+        });
+        const barStr = String(barCount).padStart(2, '0');
+        const stepStr = String(stepIdx + 1).padStart(2, '0');
+        document.getElementById('transport-step-lcd').textContent = `${barStr}.${stepStr}`;
+      }
+
+      function tickSequencer() {
+        if (!isTransportPlaying) return;
+
+        highlightPlayingStep(currentStep);
+
+        // Trigger Subtractor-9D step
+        if (subSteps[currentStep] && subSteps[currentStep].active) {
+          triggerSubtractorVoice(subSteps[currentStep].noteIdx);
+        }
+
+        // Trigger Redrum-X16 voices
+        for (let r = 0; r < DRUM_CHANNELS.length; r++) {
+          if (drumGrid[r][currentStep] === 1) {
+            triggerDrumVoice(r);
+          }
+        }
+
+        currentStep = (currentStep + 1) % 16;
+        if (currentStep === 0) barCount += 1;
+
+        stepTimerId = setTimeout(tickSequencer, getStepIntervalMs());
+      }
+
+      document.getElementById('transport-play').addEventListener('click', () => {
+        if (!initStudioAudio()) return;
+        if (isTransportPlaying) return;
+        isTransportPlaying = true;
+        document.getElementById('transport-play').classList.add('active');
+        updateSourceHud();
+        tickSequencer();
+        showBanner('Studio Transport Running.');
+      });
+
+      document.getElementById('transport-stop').addEventListener('click', () => {
+        isTransportPlaying = false;
+        clearTimeout(stepTimerId);
+        currentStep = 0;
+        barCount = 1;
+        document.getElementById('transport-play').classList.remove('active');
+        document.querySelectorAll('.step-pad.playing').forEach((el) => el.classList.remove('playing'));
+        document.getElementById('transport-step-lcd').textContent = '01.01';
+        updateSourceHud();
+        showBanner('Studio Transport Stopped.');
+      });
+
+      const bpmInput = document.getElementById('transport-bpm');
+      document.getElementById('bpm-up').addEventListener('click', () => {
+        bpmInput.value = Math.min(180, (parseInt(bpmInput.value, 10) || 124) + 1);
+      });
+      document.getElementById('bpm-down').addEventListener('click', () => {
+        bpmInput.value = Math.max(60, (parseInt(bpmInput.value, 10) || 124) - 1);
+      });
+
+      // ===================================================================
+      // 5. UNIT 04 & 05 CONTROLS (12-SLIDER HYPER-COMPRESSOR & RV-7000 FX)
+      // ===================================================================
+      function bindHyperSlider(inputId, valId, key, fmt = (v) => v.toFixed(2)) {
+        const el = document.getElementById(inputId);
+        const label = document.getElementById(valId);
+        if (!el || !label) return;
+        el.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          hyperParams[key] = val;
+          label.textContent = fmt(val);
+        });
+      }
+
+      bindHyperSlider('s1-floor', 'val-s1-floor', 's1Floor', (v) => v.toFixed(3));
+      bindHyperSlider('s1-condense', 'val-s1-condense', 's1Condense');
+      bindHyperSlider('s1-round', 'val-s1-round', 's1Round');
+      bindHyperSlider('s2-floor', 'val-s2-floor', 's2Floor', (v) => v.toFixed(3));
+      bindHyperSlider('s2-condense', 'val-s2-condense', 's2Condense');
+      bindHyperSlider('s2-round', 'val-s2-round', 's2Round');
+      bindHyperSlider('s3-floor', 'val-s3-floor', 's3Floor', (v) => v.toFixed(3));
+      bindHyperSlider('s3-condense', 'val-s3-condense', 's3Condense');
+      bindHyperSlider('s3-round', 'val-s3-round', 's3Round');
+      bindHyperSlider('s4-floor', 'val-s4-floor', 's4Density');
+      bindHyperSlider('s4-condense', 'val-s4-condense', 's4WaveHz');
+      bindHyperSlider('s4-round', 'val-s4-round', 's4SpliceRound');
+
+      const btnHyperBypass = document.getElementById('btn-hyper-bypass');
+      btnHyperBypass.addEventListener('click', () => {
+        hyperParams.enabled = !hyperParams.enabled;
+        btnHyperBypass.textContent = hyperParams.enabled ? 'HYPER DSP: ON' : 'HYPER DSP: BYPASS';
+        btnHyperBypass.classList.toggle('active', hyperParams.enabled);
+        showBanner(hyperParams.enabled ? 'HC-4X Silence-Gap Hyper-Compressor engaged.' : 'HC-4X Hyper-Compressor bypassed.');
+      });
+
+      // RV-7000 FX Controls
+      document.getElementById('fx-delay-time').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-delay-time-val').textContent = v.toFixed(2) + 's';
+        if (delayNodeL && delayNodeR) {
+          delayNodeL.delayTime.value = v;
+          delayNodeR.delayTime.value = Math.min(1.5, v * 1.5);
+        }
+      });
+
+      document.getElementById('fx-delay-fb').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-delay-fb-val').textContent = Math.round(v * 100) + '%';
+        if (delayFeedbackL && delayFeedbackR) {
+          delayFeedbackL.gain.value = v;
+          delayFeedbackR.gain.value = v;
+        }
+      });
+
+      document.getElementById('fx-delay-mix').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-delay-mix-val').textContent = Math.round(v * 100) + '%';
+        if (delayWetGain && !fxBypassed) delayWetGain.gain.value = v;
+      });
+
+      document.getElementById('fx-rev-size').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-rev-size-val').textContent = v.toFixed(1) + 's';
+        if (convolverNode && audioCtx) {
+          convolverNode.buffer = createImpulseResponse(audioCtx, v, 2.8);
+        }
+      });
+
+      document.getElementById('fx-rev-damp').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-rev-damp-val').textContent = (v / 1000).toFixed(1) + 'kHz';
+        if (reverbDampFilter) reverbDampFilter.frequency.value = v;
+      });
+
+      document.getElementById('fx-rev-mix').addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        document.getElementById('fx-rev-mix-val').textContent = Math.round(v * 100) + '%';
+        if (reverbWetGain && !fxBypassed) reverbWetGain.gain.value = v;
+      });
+
+      const btnFxBypass = document.getElementById('btn-fx-bypass');
+      btnFxBypass.addEventListener('click', () => {
+        fxBypassed = !fxBypassed;
+        btnFxBypass.textContent = fxBypassed ? 'FX BUS: BYPASS' : 'FX BUS: ACTIVE';
+        btnFxBypass.classList.toggle('active', !fxBypassed);
+        if (delayWetGain && reverbWetGain) {
+          delayWetGain.gain.value = fxBypassed ? 0 : parseFloat(document.getElementById('fx-delay-mix').value);
+          reverbWetGain.gain.value = fxBypassed ? 0 : parseFloat(document.getElementById('fx-rev-mix').value);
+        }
+      });
+
+      // ===================================================================
+      // 6. REAR-PANEL PATCH BAY & SVG DANGLING CABLES (TAB FLIP)
+      // ===================================================================
+      let isRackFlipped = false;
+      const frontView = document.getElementById('rack-front-view');
+      const rearView = document.getElementById('rack-rear-view');
+      const flipBtn = document.getElementById('btn-flip-rack');
+
+      const DEFAULT_CABLES = [
+        { from: 'jack-drone-out', to: 'jack-mix-in1', color: '#f59e0b' },
+        { from: 'jack-sub-out',   to: 'jack-mix-in2', color: '#fbbf24' },
+        { from: 'jack-drum-out',  to: 'jack-mix-in3', color: '#d97706' },
+        { from: 'jack-deck-out',  to: 'jack-mix-in4', color: '#f59e0b' },
+        { from: 'jack-mix-out',   to: 'jack-hc-in',   color: '#ef4444' },
+        { from: 'jack-hc-out',    to: 'jack-fx-in',   color: '#10b981' },
+        { from: 'jack-fx-out',    to: 'jack-main-out',color: '#34d399' },
+        { from: 'jack-cv-beat',   to: 'jack-cv-torsion', color: '#38bdf8', cv: 'torsion' },
+        { from: 'jack-cv-beat',   to: 'jack-cv-cutoff',  color: '#7dd3fc', cv: 'cutoff' }
+      ];
+
+      let activeCables = DEFAULT_CABLES.map((c) => ({ ...c }));
+      let selectedJackId = null;
+
+      function renderPatchCables() {
+        const svg = document.getElementById('patch-cables-svg');
+        const stage = document.getElementById('patch-bay-stage');
+        if (!svg || !stage || isRackFlipped === false) return;
+
+        const stageRect = stage.getBoundingClientRect();
+        svg.setAttribute('viewBox', `0 0 ${stageRect.width} ${stageRect.height}`);
+        svg.innerHTML = '';
+
+        activeCables.forEach((cable) => {
+          const elFrom = document.getElementById(cable.from);
+          const elTo = document.getElementById(cable.to);
+          if (!elFrom || !elTo) return;
+
+          const r1 = elFrom.getBoundingClientRect();
+          const r2 = elTo.getBoundingClientRect();
+
+          const x1 = r1.left - stageRect.left + r1.width / 2;
+          const y1 = r1.top - stageRect.top + r1.height / 2;
+          const x2 = r2.left - stageRect.left + r2.width / 2;
+          const y2 = r2.top - stageRect.top + r2.height / 2;
+
+          // Gravity droop control points
+          const midX = (x1 + x2) / 2;
+          const droop = Math.max(45, Math.abs(y2 - y1) * 0.45 + Math.abs(x2 - x1) * 0.15);
+          const ctrlY = Math.max(y1, y2) + droop;
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${ctrlY}, ${x2} ${y2}`);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', cable.color);
+          path.setAttribute('stroke-width', cable.cv ? '2.5' : '4');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('opacity', '0.88');
+          svg.appendChild(path);
+
+          // Plug caps
+          [ [x1, y1], [x2, y2] ].forEach(([cx, cy]) => {
+            const cap = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            cap.setAttribute('cx', cx);
+            cap.setAttribute('cy', cy);
+            cap.setAttribute('r', cable.cv ? '4.5' : '6');
+            cap.setAttribute('fill', cable.color);
+            cap.setAttribute('stroke', '#090705');
+            cap.setAttribute('stroke-width', '1.5');
+            svg.appendChild(cap);
+          });
+        });
+      }
+
+      document.querySelectorAll('.trs-jack').forEach((jack) => {
+        jack.addEventListener('click', () => {
+          const id = jack.id;
+          if (!selectedJackId) {
+            selectedJackId = id;
+            jack.classList.add('selected-jack');
+            showBanner(`Selected ${id.replace('jack-', '').toUpperCase()} — tap destination jack to patch.`);
+          } else if (selectedJackId === id) {
+            jack.classList.remove('selected-jack');
+            selectedJackId = null;
+          } else {
+            document.getElementById(selectedJackId)?.classList.remove('selected-jack');
+            // Replace or add cable
+            const existingIdx = activeCables.findIndex((c) => c.to === id);
+            const newCable = {
+              from: selectedJackId,
+              to: id,
+              color: id.includes('cv') ? '#38bdf8' : '#fbbf24'
+            };
+            if (existingIdx >= 0) activeCables[existingIdx] = newCable;
+            else activeCables.push(newCable);
+            selectedJackId = null;
+            renderPatchCables();
+            showBanner('Virtual patch cable connected.');
+          }
+        });
+      });
+
+      const btnCvTorsion = document.getElementById('toggle-cv-torsion');
+      btnCvTorsion.addEventListener('click', () => {
+        cvBeatToTorsion = !cvBeatToTorsion;
+        btnCvTorsion.textContent = `CV: BEAT GATE → 9D TORSION [${cvBeatToTorsion ? 'ON' : 'OFF'}]`;
+        btnCvTorsion.classList.toggle('active', cvBeatToTorsion);
+      });
+
+      const btnCvFilter = document.getElementById('toggle-cv-filter');
+      btnCvFilter.addEventListener('click', () => {
+        cvLfoToCutoff = !cvLfoToCutoff;
+        btnCvFilter.textContent = `CV: LFO WAVE → LPF CUTOFF [${cvLfoToCutoff ? 'ON' : 'OFF'}]`;
+        btnCvFilter.classList.toggle('active', cvLfoToCutoff);
+      });
+
+      document.getElementById('reset-patch-cables').addEventListener('click', () => {
+        activeCables = DEFAULT_CABLES.map((c) => ({ ...c }));
+        renderPatchCables();
+        showBanner('Rear patch bay restored to studio default.');
+      });
+
+      function toggleRackFlip() {
+        isRackFlipped = !isRackFlipped;
+        frontView.classList.toggle('hidden', isRackFlipped);
+        rearView.classList.toggle('hidden', !isRackFlipped);
+        flipBtn.classList.toggle('blue-active', isRackFlipped);
+        document.getElementById('flip-btn-label').textContent = isRackFlipped ? 'FRONT RACK [TAB]' : 'FLIP RACK [TAB]';
+        if (isRackFlipped) {
+          requestAnimationFrame(renderPatchCables);
+        } else {
+          handleViewportResize();
+        }
+      }
+
+      flipBtn.addEventListener('click', toggleRackFlip);
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          toggleRackFlip();
+        }
+      });
+
+      // ===================================================================
+      // 7. UNIT 06: 9D AMBER MESH 3D WEBGL VISUALIZER & TELEMETRY
+      // ===================================================================
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x070502, 0.045);
+
+      const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+      camera.position.set(0, 1.2, 6.2);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.domElement.classList.add('w-full', 'h-full', 'block');
+      container.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 2.5;
+      controls.maxDistance = 16.0;
+
+      const uniforms = {
+        uTime:          { value: 0 },
+        uDepth:         { value: 1.4 },
+        uTension:       { value: 2.5 },
+        uBass:          { value: 0 },
+        uMid:           { value: 0 },
+        uTreble:        { value: 0 },
+        uGapCondense:   { value: 0.7 },
+        uWaveRound:     { value: 0.68 },
+        uPulseTime:     { value: -10.0 },
+        uBluePulseTime: { value: -10.0 },
+        uBlueMix:       { value: 0.0 },
+        uMode:          { value: 0 }
+      };
+
+      const coreGeo = new THREE.TorusKnotGeometry(1.45, 0.48, 220, 48, 3, 5);
+      const coreMat = new THREE.ShaderMaterial({
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        uniforms: uniforms,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
+      const amberMesh = new THREE.Mesh(coreGeo, coreMat);
+      scene.add(amberMesh);
+
+      const cageGeo = new THREE.IcosahedronGeometry(2.85, 2);
+      const cageMat = new THREE.MeshBasicMaterial({
+        color: 0xf59e0b,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.14
+      });
+      const phaseCage = new THREE.Mesh(cageGeo, cageMat);
+      scene.add(phaseCage);
+
+      const gridHelper = new THREE.GridHelper(24, 36, 0xd97706, 0x291804);
+      gridHelper.position.y = -2.8;
+      scene.add(gridHelper);
+
+      const particleCount = 450;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(particleCount * 3);
+      const pBasePos = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const x = (Math.random() - 0.5) * 18;
+        const y = (Math.random() - 0.5) * 12;
+        const z = (Math.random() - 0.5) * 18;
+        pPos[i3] = pBasePos[i3] = x;
+        pPos[i3 + 1] = pBasePos[i3 + 1] = y;
+        pPos[i3 + 2] = pBasePos[i3 + 2] = z;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const pMat = new THREE.PointsMaterial({
+        color: 0xfbbf24,
+        size: 0.048,
+        transparent: true,
+        opacity: 0.65
+      });
+      const dustSystem = new THREE.Points(pGeo, pMat);
+      scene.add(dustSystem);
+
+      // Raycasting & Sovereign Nodes
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const spawnedNodes = [];
+      let isBluePhaseActive = false;
+      let blueTargetMix = 0.0;
+
+      function spawnSovereignNodeAt(worldPoint, isElectricBlue) {
+        const nodeGeo = new THREE.OctahedronGeometry(0.115, 0);
+        const nodeMat = new THREE.MeshBasicMaterial({
+          color: isElectricBlue ? 0x38bdf8 : 0xfef08a
+        });
+        const node = new THREE.Mesh(nodeGeo, nodeMat);
+        node.position.copy(worldPoint);
+        node.userData = {
+          vel: worldPoint.clone().normalize().multiplyScalar(0.016 + Math.random() * 0.022),
+          isBlue: isElectricBlue
+        };
+        scene.add(node);
+        spawnedNodes.push(node);
+
+        if (spawnedNodes.length > 90) {
+          const oldest = spawnedNodes.shift();
+          scene.remove(oldest);
+          oldest.geometry.dispose();
+          oldest.material.dispose();
+        }
+        document.getElementById('hud-nodes').textContent = spawnedNodes.length;
+      }
+
+      let beatFlashTimeout = null;
+      const beatFlashLed = document.getElementById('beat-flash-led');
+
+      function flashBeatLed(isBlue) {
+        if (!beatFlashLed) return;
+        beatFlashLed.className = isBlue
+          ? 'inline-block w-2 h-2 rounded-full bg-sky-300 shadow-[0_0_8px_#38bdf8] scale-125 transition-all duration-75'
+          : 'inline-block w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_8px_#fbbf24] scale-125 transition-all duration-75';
+        clearTimeout(beatFlashTimeout);
+        beatFlashTimeout = setTimeout(() => {
+          beatFlashLed.className = 'inline-block w-2 h-2 rounded-full bg-amber-500/30 transition-all duration-75';
+        }, 120);
+      }
+
+      function triggerShockwave(spawnNodeFromSurface = false) {
+        uniforms.uPulseTime.value = uniforms.uTime.value;
+        if (isBluePhaseActive) {
+          uniforms.uBluePulseTime.value = uniforms.uTime.value;
+        }
+        flashBeatLed(isBluePhaseActive);
+        if (spawnNodeFromSurface) {
+          const angle = Math.random() * Math.PI * 2;
+          const elev = (Math.random() - 0.5) * Math.PI * 0.7;
+          const r = 1.65;
+          const pt = new THREE.Vector3(
+            r * Math.cos(elev) * Math.cos(angle),
+            r * Math.sin(elev),
+            r * Math.cos(elev) * Math.sin(angle)
+          );
+          spawnSovereignNodeAt(pt, isBluePhaseActive);
+        }
+      }
+
+      let downPos = { x: 0, y: 0 };
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        downPos = { x: e.clientX, y: e.clientY };
+      });
+
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 8) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObject(amberMesh, false);
+        if (hits.length > 0) {
+          spawnSovereignNodeAt(hits[0].point, isBluePhaseActive);
+          triggerShockwave(false);
+        }
+      });
+
+      // Presets & Beat Detection
+      const PRESETS = {
+        bass:  { label: 'BASS CLUB',     hint: 'SUB 20–150Hz', minFloor: 0.15,  sensitivity: 1.40, cooldown: 0.25, bassWeight: 1.0,  midWeight: 0.15, nodeHitThreshold: 0.34 },
+        vocal: { label: 'VOCAL / VOICE', hint: 'VOICE + MID',  minFloor: 0.08,  sensitivity: 1.22, cooldown: 0.19, bassWeight: 0.45, midWeight: 0.85, nodeHitThreshold: 0.24 },
+        quiet: { label: 'QUIET ROOM',    hint: 'LOW-GAIN MIC', minFloor: 0.035, sensitivity: 1.15, cooldown: 0.22, bassWeight: 0.65, midWeight: 0.65, nodeHitThreshold: 0.15 }
+      };
+
+      let activePresetKey = 'bass';
+      let currentPreset = PRESETS.bass;
+      let autoBeatEnabled = true;
+      let beatSensitivity = currentPreset.sensitivity;
+      let beatCount = 0;
+      let transientEnergyAvg = 0.0;
+      let lastBeatRealTime = -10.0;
+      let baseTorsionDepth = 1.40;
+
+      const sliderBeatSens = document.getElementById('slider-beat-sens');
+      const valBeatSens = document.getElementById('val-beat-sens');
+
+      document.querySelectorAll('.preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.preset;
+          const preset = PRESETS[key];
+          if (!preset) return;
+          activePresetKey = key;
+          currentPreset = preset;
+          beatSensitivity = preset.sensitivity;
+          transientEnergyAvg = 0.0;
+
+          sliderBeatSens.value = preset.sensitivity.toFixed(2);
+          valBeatSens.textContent = preset.sensitivity.toFixed(2) + 'x';
+          document.getElementById('hud-preset').textContent = preset.label;
+          document.getElementById('preset-band-hint').textContent = preset.hint;
+
+          document.querySelectorAll('.preset-btn').forEach((b) => b.classList.toggle('active', b.dataset.preset === key));
+          showBanner(`Sensitivity Preset: ${preset.label}`);
+        });
+      });
+
+      const btnAutoBeat = document.getElementById('btn-auto-beat');
+      btnAutoBeat.addEventListener('click', () => {
+        autoBeatEnabled = !autoBeatEnabled;
+        btnAutoBeat.textContent = autoBeatEnabled ? '◎ AUTO BEAT SHOCKWAVES: ON' : '◎ AUTO BEAT SHOCKWAVES: OFF';
+        btnAutoBeat.classList.toggle('active', autoBeatEnabled);
+      });
+
+      let speedMultiplier = 1.0;
+      document.getElementById('slider-depth').addEventListener('input', (e) => {
+        baseTorsionDepth = parseFloat(e.target.value);
+        uniforms.uDepth.value = baseTorsionDepth;
+        document.getElementById('val-depth').textContent = baseTorsionDepth.toFixed(2);
+      });
+      document.getElementById('slider-tension').addEventListener('input', (e) => {
+        uniforms.uTension.value = parseFloat(e.target.value);
+        document.getElementById('val-tension').textContent = uniforms.uTension.value.toFixed(2);
+      });
+      document.getElementById('slider-speed').addEventListener('input', (e) => {
+        speedMultiplier = parseFloat(e.target.value);
+        document.getElementById('val-speed').textContent = speedMultiplier.toFixed(2);
+      });
+      sliderBeatSens.addEventListener('input', (e) => {
+        beatSensitivity = parseFloat(e.target.value);
+        valBeatSens.textContent = beatSensitivity.toFixed(2) + 'x';
+      });
+
+      document.querySelectorAll('.mode-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode = parseInt(btn.dataset.mode, 10);
+          uniforms.uMode.value = mode;
+          coreMat.wireframe = (mode === 1);
+          document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // Blue Phase Sovereign Pulse
+      const btnBluePhase = document.getElementById('btn-blue-phase');
+      btnBluePhase.addEventListener('click', () => {
+        isBluePhaseActive = !isBluePhaseActive;
+        blueTargetMix = isBluePhaseActive ? 1.0 : 0.0;
+        triggerShockwave(false);
+
+        btnBluePhase.classList.toggle('blue-active', isBluePhaseActive);
+        document.querySelectorAll('.rack-chassis').forEach((c) => c.classList.toggle('blue-mode', isBluePhaseActive));
+
+        if (isBluePhaseActive) {
+          document.getElementById('btn-blue-label').textContent = 'BLUE PHASE ENGAGED // PULSE';
+          document.getElementById('hud-blue-state').textContent = 'ACTIVE (ELECTRIC BLUE)';
+          document.getElementById('telemetry-dot').className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping';
+          cageMat.color.setHex(0x38bdf8);
+          pMat.color.setHex(0x7dd3fc);
+          gridHelper.setColors(0x0284c7, 0x082f49);
+          showBanner('Blue Phase Sovereign Pulse engaged across Rack.');
+        } else {
+          document.getElementById('btn-blue-label').textContent = 'BLUE PHASE // SOVEREIGN PULSE';
+          document.getElementById('hud-blue-state').textContent = 'STANDBY (AMBER)';
+          document.getElementById('telemetry-dot').className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+          cageMat.color.setHex(0xf59e0b);
+          pMat.color.setHex(0xfbbf24);
+          gridHelper.setColors(0xd97706, 0x291804);
+          showBanner('Returned to Amber Sovereign baseline.');
+        }
+      });
+
+      document.getElementById('btn-pulse').addEventListener('click', () => {
+        triggerShockwave(true);
+        amberMesh.rotation.z += Math.PI / 2;
+        showBanner('Zero-crossing +1D phase snap emitted.');
+      });
+
+      // Fullscreen Pop-Out Toggle for 3D Visualizer
+      const unit06Section = document.getElementById('unit-06-section');
+      const btnPopout = document.getElementById('btn-popout-viewport');
+      const btnExitPopout = document.getElementById('btn-exit-popout');
+
+      function setPopoutState(popped) {
+        unit06Section.classList.toggle('viewport-popout', popped);
+        btnExitPopout.classList.toggle('hidden', !popped);
+        handleViewportResize();
+      }
+      btnPopout.addEventListener('click', () => setPopoutState(true));
+      btnExitPopout.addEventListener('click', () => setPopoutState(false));
+
+      // Responsive WebGL & Scope Canvas Sizing
+      const spectrumCanvas = document.getElementById('fft-spectrum-canvas');
+      const spectrumCtx = spectrumCanvas.getContext('2d');
+
+      function handleViewportResize() {
+        const rect = container.getBoundingClientRect();
+        const w = Math.max(1, rect.width);
+        const h = Math.max(1, rect.height);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+        if (spectrumCanvas) {
+          const sRect = spectrumCanvas.getBoundingClientRect();
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          spectrumCanvas.width = Math.max(1, Math.floor(sRect.width * dpr));
+          spectrumCanvas.height = Math.max(1, Math.floor(sRect.height * dpr));
+        }
+        if (isRackFlipped) renderPatchCables();
+      }
+
+      window.addEventListener('resize', handleViewportResize);
+
+      function renderSpectrumAndBeatMeter(meterEnergy, effectiveThreshold, blueMix) {
+        const beatEnergyBar = document.getElementById('beat-energy-bar');
+        const beatThresholdMarker = document.getElementById('beat-threshold-marker');
+        const hudBeatThresh = document.getElementById('hud-beat-thresh');
+
+        const clampedEnergyPct = Math.max(0, Math.min(100, meterEnergy * 100));
+        const clampedThreshPct = Math.max(2, Math.min(96, effectiveThreshold * 100));
+        beatEnergyBar.style.width = clampedEnergyPct.toFixed(1) + '%';
+        beatThresholdMarker.style.left = clampedThreshPct.toFixed(1) + '%';
+        hudBeatThresh.textContent = 'THR: ' + clampedThreshPct.toFixed(1) + '%';
+
+        beatEnergyBar.className = blueMix > 0.5
+          ? 'h-full w-0 bg-gradient-to-r from-sky-500 via-cyan-300 to-white transition-[width] duration-75'
+          : 'h-full w-0 bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-100 transition-[width] duration-75';
+
+        if (!spectrumCtx) return;
+        const w = spectrumCanvas.width;
+        const h = spectrumCanvas.height;
+        spectrumCtx.clearRect(0, 0, w, h);
+
+        const binCount = 28;
+        const gap = Math.max(1, Math.floor(w / (binCount * 5)));
+        const barWidth = Math.max(2, (w - gap * (binCount - 1)) / binCount);
+
+        for (let i = 0; i < binCount; i++) {
+          let norm = 0;
+          if (fftAnalyser && fftDataArray) {
+            const idx = Math.min(fftDataArray.length - 1, Math.floor((i / binCount) * 96));
+            norm = fftDataArray[idx] / 255;
+          } else {
+            norm = 0.06 + 0.04 * Math.sin(uniforms.uTime.value * 2.2 + i * 0.35);
+          }
+
+          const barH = Math.max(2, norm * (h - 4));
+          const x = i * (barWidth + gap);
+          const y = h - barH;
+
+          spectrumCtx.fillStyle = blueMix > 0.5
+            ? 'rgba(56, 189, 248, 0.55)'
+            : 'rgba(245, 158, 11, 0.55)';
+          spectrumCtx.fillRect(x, y, barWidth, barH);
+        }
+
+        spectrumCtx.beginPath();
+        const traceLen = dspTelemetry.envTrace.length;
+        for (let i = 0; i < traceLen; i++) {
+          const sampleIdx = (envTraceIdx + i) % traceLen;
+          const v = dspTelemetry.envTrace[sampleIdx];
+          const px = (i / (traceLen - 1)) * w;
+          const py = h - 3 - v * (h - 6);
+          if (i === 0) spectrumCtx.moveTo(px, py);
+          else spectrumCtx.lineTo(px, py);
+        }
+        spectrumCtx.strokeStyle = blueMix > 0.5 ? '#e0f2fe' : '#fef08a';
+        spectrumCtx.lineWidth = 2;
+        spectrumCtx.stroke();
+      }
+
+      function updateFrequencyCloud(t, bassVal, midVal, trebleVal) {
+        const posAttr = pGeo.getAttribute('position');
+        const arr = posAttr.array;
+        pMat.size = 0.042 + trebleVal * 0.055;
+
+        for (let i = 0; i < particleCount; i++) {
+          const i3 = i * 3;
+          const bx = pBasePos[i3];
+          const by = pBasePos[i3 + 1];
+          const bz = pBasePos[i3 + 2];
+
+          const radialDist = Math.hypot(bx, bz) + 0.001;
+          const bassPush = 1.0 + bassVal * 0.22 * (1.0 / (1.0 + Math.abs(by) * 0.25));
+
+          const midBandFactor = Math.exp(-Math.pow(by * 0.35, 2));
+          const midAngle = midVal * 0.85 * midBandFactor;
+          const cosM = Math.cos(midAngle);
+          const sinM = Math.sin(midAngle);
+          const rx = bx * cosM - bz * sinM;
+          const rz = bx * sinM + bz * cosM;
+
+          const trebleFactor = Math.min(1.0, Math.abs(by) / 5.0 + 0.25);
+          const jitter = trebleVal * 0.35 * trebleFactor;
+          const jx = Math.sin(t * 9.0 + i * 1.7) * jitter;
+          const jy = Math.cos(t * 8.3 + i * 2.3) * jitter;
+          const jz = Math.sin(t * 7.7 + i * 3.1) * jitter;
+
+          arr[i3]     = rx * bassPush + jx;
+          arr[i3 + 1] = by + Math.sin(t * 1.4 + radialDist) * 0.12 + jy;
+          arr[i3 + 2] = rz * bassPush + jz;
+        }
+        posAttr.needsUpdate = true;
+
+        const cageScale = 1.0 + bassVal * 0.10;
+        phaseCage.scale.set(cageScale, cageScale, cageScale);
+        phaseCage.rotation.y = -t * (0.15 + midVal * 0.45);
+        phaseCage.rotation.z = t * (0.10 + trebleVal * 0.55);
+      }
+
+      // ===================================================================
+      // 8. MAIN ANIMATION & DSP METERING LOOP
+      // ===================================================================
+      let lastTime = 0;
+      let wallClockSec = 0;
+      let loopStarted = false;
+      let smoothedMeterEnergy = 0;
+      let frameCounter = 0;
+      let fpsTimer = 0;
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        const safeNow = typeof now === 'number' ? now : performance.now();
+        const dt = lastTime > 0 ? Math.min((safeNow - lastTime) * 0.001, 0.1) : 0.016;
+        lastTime = safeNow;
+        wallClockSec += dt;
+
+        // Update FPS / DSP Load readout
+        frameCounter += 1;
+        fpsTimer += dt;
+        if (fpsTimer >= 0.5) {
+          const fps = Math.round(frameCounter / fpsTimer);
+          const dspPct = audioCtx ? Math.min(48, 12 + (isTransportPlaying ? 8 : 0) + (hyperParams.enabled ? 6 : 0)) : 4;
+          document.getElementById('dsp-load-readout').textContent = `${dspPct}% · ${fps}Hz`;
+          frameCounter = 0;
+          fpsTimer = 0;
+        }
+
+        // Stereo Master L/R VU Peak Metering
+        if (analyserL && analyserR && timeDataL && timeDataR) {
+          analyserL.getByteTimeDomainData(timeDataL);
+          analyserR.getByteTimeDomainData(timeDataR);
+          let peakL = 0;
+          let peakR = 0;
+          for (let i = 0; i < timeDataL.length; i++) {
+            peakL = Math.max(peakL, Math.abs(timeDataL[i] - 128) / 128);
+            peakR = Math.max(peakR, Math.abs(timeDataR[i] - 128) / 128);
+          }
+          document.getElementById('master-vu-l').style.width = Math.min(100, peakL * 140) + '%';
+          document.getElementById('master-vu-r').style.width = Math.min(100, peakR * 140) + '%';
+        }
+
+        const activeCondense = hyperParams.enabled
+          ? (hyperParams.s1Condense + hyperParams.s2Condense + hyperParams.s3Condense) / 3
+          : 0;
+        const activeWaveRound = hyperParams.enabled
+          ? (hyperParams.s1Round + hyperParams.s2Round + hyperParams.s3Round + hyperParams.s4SpliceRound) / 4
+          : 0;
+
+        uniforms.uGapCondense.value = activeCondense;
+        uniforms.uWaveRound.value = activeWaveRound;
+
+        const gapTimeBoost = hyperParams.enabled ? (1.0 + activeCondense * hyperParams.s4Density * 0.35) : 1.0;
+        uniforms.uTime.value += dt * speedMultiplier * gapTimeBoost;
+        const t = uniforms.uTime.value;
+
+        uniforms.uBlueMix.value = THREE.MathUtils.lerp(uniforms.uBlueMix.value, blueTargetMix, 0.08);
+
+        let bass = 0;
+        let mid = 0;
+        let treble = 0;
+        if (fftAnalyser && fftDataArray) {
+          fftAnalyser.getByteFrequencyData(fftDataArray);
+          for (let i = 0; i < 12; i++) bass += fftDataArray[i];
+          for (let i = 12; i < 48; i++) mid += fftDataArray[i];
+          for (let i = 48; i < 110; i++) treble += fftDataArray[i];
+          bass = (bass / (12 * 255)) * (0.5 + hyperParams.s1Condense * 0.8);
+          mid = (mid / (36 * 255)) * (0.5 + hyperParams.s2Condense * 0.8);
+          treble = (treble / (62 * 255)) * (0.5 + hyperParams.s3Condense * 0.8);
+        }
+
+        // Apply CV Beat-Gate Modulation to 9D Torsion if patched on rear panel
+        if (cvBeatToTorsion) {
+          uniforms.uDepth.value = baseTorsionDepth + bass * 0.85;
+        } else {
+          uniforms.uDepth.value = baseTorsionDepth;
+        }
+
+        const weightSum = Math.max(0.1, currentPreset.bassWeight + currentPreset.midWeight);
+        const rawTransientEnergy = (bass * currentPreset.bassWeight + mid * currentPreset.midWeight) / weightSum;
+        const effectiveThreshold = Math.max(currentPreset.minFloor, transientEnergyAvg * beatSensitivity);
+
+        const hasAudioInput = isTransportPlaying || isMicActive || isSynthPlaying || (uploadedAudioEl && !uploadedAudioEl.paused);
+        if (hasAudioInput) {
+          const isTransientPeak =
+            rawTransientEnergy >= effectiveThreshold &&
+            (wallClockSec - lastBeatRealTime) > currentPreset.cooldown;
+
+          if (autoBeatEnabled && isTransientPeak) {
+            lastBeatRealTime = wallClockSec;
+            beatCount += 1;
+            document.getElementById('hud-beats').textContent = beatCount;
+            triggerShockwave(rawTransientEnergy > currentPreset.nodeHitThreshold);
+          }
+
+          const alpha = rawTransientEnergy > transientEnergyAvg ? 0.045 : 0.13;
+          transientEnergyAvg = transientEnergyAvg * (1 - alpha) + rawTransientEnergy * alpha;
+        } else {
+          transientEnergyAvg *= 0.95;
+        }
+
+        const boostGain = activePresetKey === 'quiet' ? 1.65 : activePresetKey === 'vocal' ? 1.25 : 1.0;
+        const displayedEnergy = Math.min(1.0, rawTransientEnergy * boostGain);
+        smoothedMeterEnergy = THREE.MathUtils.lerp(smoothedMeterEnergy, displayedEnergy, 0.24);
+
+        uniforms.uBass.value = THREE.MathUtils.lerp(uniforms.uBass.value, bass, 0.22);
+        uniforms.uMid.value = THREE.MathUtils.lerp(uniforms.uMid.value, mid, 0.22);
+        uniforms.uTreble.value = THREE.MathUtils.lerp(uniforms.uTreble.value, treble, 0.22);
+
+        if (!isRackFlipped) {
+          amberMesh.rotation.x = t * 0.22;
+          amberMesh.rotation.y = t * 0.34;
+          dustSystem.rotation.y = t * 0.04;
+
+          updateFrequencyCloud(t, uniforms.uBass.value, uniforms.uMid.value, uniforms.uTreble.value);
+
+          for (let i = 0; i < spawnedNodes.length; i++) {
+            const node = spawnedNodes[i];
+            node.position.add(node.userData.vel);
+            node.userData.vel.multiplyScalar(0.985);
+            node.rotation.x += 0.04;
+            node.rotation.y += 0.05;
+          }
+
+          renderSpectrumAndBeatMeter(
+            smoothedMeterEnergy,
+            Math.min(0.96, effectiveThreshold * boostGain),
+            uniforms.uBlueMix.value
+          );
+
+          controls.update();
+          renderer.render(scene, camera);
+        }
+
+        // Update Hyper-Compressor & Manifold Telemetry Readouts
+        document.getElementById('hud-seg-state').textContent = !hyperParams.enabled
+          ? 'BYPASSED'
+          : (dspTelemetry.isSilentGap ? 'CONDENSING GAP' : 'SONIC SEGMENT');
+        document.getElementById('hud-gap-cond').textContent = (hyperParams.enabled ? dspTelemetry.gapCondensePct : 0) + '%';
+        document.getElementById('hud-wave-round').textContent = dspTelemetry.waveRoundVal.toFixed(3);
+        document.getElementById('hud-sonic-segs').textContent = 'SEGS: ' + dspTelemetry.sonicSegmentCount;
+        document.getElementById('hud-bands').textContent =
+          Math.round(uniforms.uBass.value * 100) + '% · ' +
+          Math.round(uniforms.uMid.value * 100) + '% · ' +
+          Math.round(uniforms.uTreble.value * 100) + '%';
+      }
+
+      function startStudioOnce() {
+        if (loopStarted) return;
+        loopStarted = true;
+        handleViewportResize();
+        animate(performance.now());
+      }
+
+      window.addEventListener('load', startStudioOnce);
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        startStudioOnce();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "Monolith Noir 3D Analog Rack",
+  "description": "Black-and-white 3D analog studio rack with MP3 player, Class-A amplifier, silence-gap hyper-compressor, 4-band EQ, live Reason-style patch cables with signal-flow visualizer, 128k WAV exporter, Google Drive JSON library sync, and AI event orchestration.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
